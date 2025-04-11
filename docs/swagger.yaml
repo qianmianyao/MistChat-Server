@@ -1,0 +1,26 @@
+basePath: /api/v1
+host: localhost:8080
+info:
+  contact: {}
+  description: Parchment服务器API文档
+  title: Parchment API
+  version: "1.0"
+paths:
+  /example/hello_world:
+    get:
+      consumes:
+      - application/json
+      description: 测试接口
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: 测试接口
+      tags:
+      - example
+swagger: "2.0"

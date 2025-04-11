@@ -1,0 +1,16 @@
+database:
+  user: "postgres"
+  password: "Zxcvbnm,123456"
+  dbname: "parchment"
+  host: "localhost"
+  port: "5432"
+  sslmode: "disable"
+
+log:
+  level: "debug"     # 日志级别：debug, info, warn, error, fatal
+  format: "console"  # 日志格式：json, console
+  output_paths:      # 日志输出路径
+    - "stdout"       # 标准输出
+    - "logs/app.log" # 文件输出
+  caller: true       # 是否输出调用者信息
+  stacktrace: true   # 是否在错误日志中输出堆栈跟踪 
