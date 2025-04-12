@@ -1,8 +1,9 @@
-package websocket
+package chat
 
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/qianmianyao/parchment-server/internal/services/chat"
+	"github.com/qianmianyao/parchment-server/internal/websocket"
 	"github.com/qianmianyao/parchment-server/pkg/utils"
 )
 
@@ -33,9 +34,9 @@ func NewWebSockerRouter() *WebSockerRouter {
 // @Param username query string false "用户名"
 // @Success 101 {string} string "Switching Protocols to websocket"
 // @Router /chat/connect [get]
-func (w *WebSockerRouter) WsHandler(hub *Hub) gin.HandlerFunc {
+func (w *WebSockerRouter) WsHandler(hub *websocket.Hub) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		serveWs(hub, c.Writer, c.Request)
+		websocket.ServeWs(hub, c.Writer, c.Request)
 	}
 }
 

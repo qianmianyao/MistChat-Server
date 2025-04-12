@@ -123,8 +123,8 @@ func (c *Client) writePump() {
 	}
 }
 
-// serveWs handles websocket requests from the peer
-func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+// ServeWs handles websocket requests from the peer
+func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	// user uuid
 	uid := r.URL.Query().Get("uid")
 	username := r.URL.Query().Get("username")

@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/qianmianyao/parchment-server/internal/handler/chat"
 	"github.com/qianmianyao/parchment-server/internal/handler/hello"
 	"github.com/qianmianyao/parchment-server/internal/websocket"
 )
@@ -23,7 +24,7 @@ func SetupRouter(r *gin.Engine) {
 func RegisterWebSocketRoutes(r *gin.RouterGroup) {
 	hub := websocket.NewHub()
 	go hub.Run()
-	r.GET("/connect", websocket.NewWebSockerRouter().WsHandler(hub))
-	r.GET("/check_room_password", websocket.NewWebSockerRouter().CheckRoomPasswordRequired)
-	r.GET("/join_room", websocket.NewWebSockerRouter().JoinRoom)
+	r.GET("/connect", chat.NewWebSockerRouter().WsHandler(hub))
+	r.GET("/check_room_password", chat.NewWebSockerRouter().CheckRoomPasswordRequired)
+	r.GET("/join_room", chat.NewWebSockerRouter().JoinRoom)
 }
