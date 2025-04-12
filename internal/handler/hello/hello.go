@@ -12,6 +12,6 @@ import "github.com/gin-gonic/gin"
 // @Router /example/hello_world [get]
 func Hello(c *gin.Context) {
 	c.JSON(200, gin.H{
-		"message": "Hello, World!",
+		"message_type": "Hello, World!",
 	})
 }

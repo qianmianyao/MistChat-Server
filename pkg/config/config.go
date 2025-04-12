@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/qianmianyao/parchment-server/internal/models/config"
+	"path/filepath"
 	"sync"
 
 	"github.com/qianmianyao/parchment-server/pkg/global"
@@ -21,7 +22,7 @@ func InitConfig() *config.Config {
 		v = viper.New()
 		v.SetConfigName("dev")
 		v.SetConfigType("yaml")
-		v.AddConfigPath("./config")
+		v.AddConfigPath(filepath.Join("C:\\Users\\90412\\Desktop\\parchment\\parchment-server", "config"))
 
 		if err := v.ReadInConfig(); err != nil {
 			panic("Error reading config file: " + err.Error())

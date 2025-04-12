@@ -4,21 +4,24 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"github.com/qianmianyao/parchment-server/internal/websocket/message_type"
 	"github.com/qianmianyao/parchment-server/pkg/global"
+	"log"
+	"net/http"
 	"time"
 )
 
 const (
-	// Time allowed to write a message to the peer.
+	// Time allowed to write a message_type to the peer.
 	writeWait = 10 * time.Second
 
-	// Time allowed to read the next pong message from the peer.
+	// Time allowed to read the next pong message_type from the peer.
 	pongWait = 60 * time.Second
 
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 
-	// Maximum message size allowed from peer.
+	// Maximum message_type size allowed from peer.
 	maxMessageSize = 512
 )
 
@@ -30,12 +33,17 @@ var (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true // 允许所有来源的请求
+	},
 }
 
 type Client struct {
-	hub  *Hub
-	conn *websocket.Conn
-	send chan []byte
+	hub      *Hub
+	conn     *websocket.Conn
+	send     chan []byte
+	uuid     string
+	username string
 }
 
 // readPump reads messages from the websocket connection
@@ -92,7 +100,7 @@ func (c *Client) writePump() {
 
 			_, err = w.Write(message)
 
-			// Add queued chat messages to the current websocket message.
+			// Add queued chat messages to the current websocket message_type.
 			n := len(c.send)
 			for i := 0; i < n; i++ {
 				_, err = w.Write(newline)
@@ -113,4 +121,32 @@ func (c *Client) writePump() {
 			}
 		}
 	}
+}
+
+// serveWs handles websocket requests from the peer
+func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+	// user uuid
+	uid := r.URL.Query().Get("uid")
+	username := r.URL.Query().Get("username")
+
+	if uid == "" {
+		http.Error(w, "Missing uid", http.StatusBadRequest)
+		return
+	}
+
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), uuid: uid, username: username}
+	client.hub.register <- client
+
+	welcomeMessage, err := message_type.NewSystemMessage(fmt.Sprintf("Welcome User %v", uid)).Serialize()
+	client.send <- welcomeMessage
+
+	// Allow collection of memory referenced by the caller by doing all work in
+	// new goroutines.
+	go client.writePump()
+	go client.readPump()
 }
