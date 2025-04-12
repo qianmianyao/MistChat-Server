@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"parchment-server/internal/handler/hello"
-	"parchment-server/internal/websocket"
+	"github.com/qianmianyao/parchment-server/internal/handler/hello"
+	"github.com/qianmianyao/parchment-server/internal/websocket"
 
 	"github.com/gin-gonic/gin"
 )

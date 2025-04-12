@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"sync"
 
-	"parchment-server/pkg/config"
-	"parchment-server/pkg/global"
+	"github.com/qianmianyao/parchment-server/pkg/config"
+	"github.com/qianmianyao/parchment-server/pkg/global"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"

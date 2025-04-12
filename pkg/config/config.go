@@ -1,10 +1,10 @@
 package config
 
 import (
-	"parchment-server/internal/models/config"
+	"github.com/qianmianyao/parchment-server/internal/models/config"
 	"sync"
 
-	"parchment-server/pkg/global"
+	"github.com/qianmianyao/parchment-server/pkg/global"
 
 	"github.com/spf13/viper"
 )

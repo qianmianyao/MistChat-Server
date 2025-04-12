@@ -2,12 +2,12 @@ package database
 
 import (
 	"fmt"
+	"github.com/qianmianyao/parchment-server/internal/models/entity"
 	"log"
-	"parchment-server/internal/models/entity"
 	"sync"
 
-	"parchment-server/pkg/config"
-	"parchment-server/pkg/global"
+	"github.com/qianmianyao/parchment-server/pkg/config"
+	"github.com/qianmianyao/parchment-server/pkg/global"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

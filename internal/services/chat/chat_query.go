@@ -2,8 +2,8 @@ package chat
 
 import (
 	"fmt"
-	"parchment-server/internal/models/entity"
-	"parchment-server/pkg/global"
+	"github.com/qianmianyao/parchment-server/internal/models/entity"
+	"github.com/qianmianyao/parchment-server/pkg/global"
 
 	"gorm.io/gorm"
 )

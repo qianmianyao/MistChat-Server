@@ -3,14 +3,14 @@ package main
 import (
 	"fmt"
 
-	"parchment-server/internal/handler"
-	"parchment-server/pkg/config"
-	"parchment-server/pkg/database"
-	"parchment-server/pkg/global"
-	"parchment-server/pkg/logger"
+	"github.com/qianmianyao/parchment-server/internal/handler"
+	"github.com/qianmianyao/parchment-server/pkg/config"
+	"github.com/qianmianyao/parchment-server/pkg/database"
+	"github.com/qianmianyao/parchment-server/pkg/global"
+	"github.com/qianmianyao/parchment-server/pkg/logger"
 
 	// 导入swagger文档
-	_ "parchment-server/docs"
+	_ "github.com/qianmianyao/parchment-server/docs"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"

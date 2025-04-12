@@ -1,4 +1,4 @@
-module parchment-server
+module github.com/qianmianyao/parchment-server
 
 go 1.23.1
 
