@@ -6,7 +6,7 @@ import "github.com/gin-gonic/gin"
 func RegisterWebSocketRoutes(r *gin.RouterGroup) {
 	hub := NewHub()
 	go hub.run()
-	r.GET("/chat", NewWebSockerRouter().WsHandler(hub))
-	r.GET("/join_room", NewWebSockerRouter().JoinRoom)
+	r.GET("/connect", NewWebSockerRouter().WsHandler(hub))
 	r.GET("/check_room_password", NewWebSockerRouter().CheckRoomPasswordRequired)
+	r.GET("/join_room", NewWebSockerRouter().JoinRoom)
 }

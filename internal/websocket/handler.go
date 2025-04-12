@@ -3,7 +3,6 @@ package websocket
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/qianmianyao/parchment-server/internal/services/chat"
-	"github.com/qianmianyao/parchment-server/pkg/global"
 	"github.com/qianmianyao/parchment-server/pkg/utils"
 )
 
@@ -13,8 +12,8 @@ type WebSockerRouter struct {
 }
 
 type JoinRoomParams struct {
-	RoomUUID string `json:"room_uuid" binding:"required"`
-	UserUUID string `json:"user_uuid" binding:"required"`
+	RoomUUID string `form:"room_uuid" binding:"required"`
+	UserUUID string `form:"user_uuid" binding:"required"`
 }
 
 func NewWebSockerRouter() *WebSockerRouter {
@@ -34,13 +33,14 @@ func (w *WebSockerRouter) WsHandler(hub *Hub) gin.HandlerFunc {
 // CheckRoomPasswordRequired checks if room password is required
 func (w *WebSockerRouter) CheckRoomPasswordRequired(c *gin.Context) {
 	var params JoinRoomParams
-	if err := c.ShouldBindJSON(&params); err != nil {
-		utils.Error(c, 404, "参数错误")
+	if err := c.ShouldBindQuery(&params); err != nil {
+		utils.ErrorWithDefault(c)
+		return
 	}
 
 	user := w.chatFind.IsUserExist(params.UserUUID)
 	if user == chat.UserNotExist {
-		global.Logger.Error("用户不存在!")
+		utils.ErrorWithDefault(c)
 		return
 	}
 
@@ -51,24 +51,32 @@ func (w *WebSockerRouter) CheckRoomPasswordRequired(c *gin.Context) {
 		if roomStatus == chat.NotInRoom {
 			roomPassword := w.chatFind.IsRequirePassword(params.RoomUUID)
 			if roomPassword == chat.NeedPassword {
-				utils.SuccessWithDefault(c, "需要密码")
+				utils.FailWithDefault(c, "需要密码")
+				return
 			}
 		}
 	case chat.RoomNotExist:
 		// 如果房间不存在就直接创建
 		roomUuid := w.chatCreate.Room(params.RoomUUID, params.RoomUUID)
 		w.chatCreate.RoomMembers(params.UserUUID, roomUuid)
+		utils.SuccessWithDefault(c, "房间创建成功")
+		return
 	}
+
+	utils.SuccessWithDefault(c, "不需要密码")
+	return
 }
 
 // JoinRoom handles joining a room
 func (w *WebSockerRouter) JoinRoom(c *gin.Context) {
 	var params JoinRoomParams
 	if err := c.ShouldBindJSON(&params); err != nil {
-		utils.Error(c, 404, "参数错误")
+		utils.ErrorWithDefault(c)
+		return
 	}
 
 	w.chatCreate.RoomMembers(params.UserUUID, params.RoomUUID)
 
 	utils.SuccessWithDefault(c, nil)
+	return
 }

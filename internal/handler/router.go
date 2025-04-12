@@ -14,7 +14,7 @@ func SetupRouter(r *gin.Engine) {
 	{
 		// hello接口
 		v1.GET("/example/hello_world", hello.Hello)
-		wsGroup := v1.Group("/ws")
+		wsGroup := v1.Group("/chat")
 		{
 			websocket.RegisterWebSocketRoutes(wsGroup)
 		}

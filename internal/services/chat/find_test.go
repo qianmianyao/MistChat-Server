@@ -39,13 +39,13 @@ func TestFind_IsUserExist(t *testing.T) {
 		{
 			name:   "用户存在",
 			args:   args{uuid: "d2520bcf-e268-4579-9bfc-6786e027ff47"},
-			want:   Exist,
+			want:   UserExist,
 			fields: fields{db: global.DB},
 		},
 		{
 			name:   "用户不存在",
 			args:   args{uuid: "non-existent-uuid"},
-			want:   NotExist,
+			want:   UserNotExist,
 			fields: fields{db: global.DB},
 		},
 	}
