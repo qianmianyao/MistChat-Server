@@ -2,13 +2,13 @@ package hello
 
 import "github.com/gin-gonic/gin"
 
-// Hello 测试接口
-// @Summary 测试接口
-// @Description 测试接口
+// Hello handles the hello world request
+// @Summary Hello World
+// @Description 返回 Hello World
 // @Tags example
 // @Accept json
 // @Produce json
-// @Success 200 {object} map[string]string
+// @Success 200 {string} string "Hello World"
 // @Router /example/hello_world [get]
 func Hello(c *gin.Context) {
 	c.JSON(200, gin.H{

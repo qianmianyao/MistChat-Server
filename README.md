@@ -1,11 +1,16 @@
+# Parchment API
 
+## Create a Swagger API Documentation
+```bash
+swag init -g ./cmd/server/main.go --parseDepth 2 --parseDependency -o ./docs
+```
 
 ## 项目结构说明
 ```text
 project/
 │
 ├── api/                 # API定义、接口文档和API版本控制
-│   └── v1/          # RESTful API接口定义
+│   └── v1/              # REST API接口定义
 │
 ├── cmd/                 # 命令行应用程序入口点
 │   └── server/          # 服务器主入口

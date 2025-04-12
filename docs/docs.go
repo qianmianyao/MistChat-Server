@@ -15,9 +15,47 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/chat/connect": {
+            "get": {
+                "description": "建立WebSocket连接",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "WebSocket连接",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "用户ID",
+                        "name": "uuid",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "用户名",
+                        "name": "username",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "101": {
+                        "description": "Switching Protocols to websocket",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/example/hello_world": {
             "get": {
-                "description": "测试接口",
+                "description": "返回 Hello World",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,15 +65,12 @@ const docTemplate = `{
                 "tags": [
                     "example"
                 ],
-                "summary": "测试接口",
+                "summary": "Hello World",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Hello World",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "type": "string"
                         }
                     }
                 }

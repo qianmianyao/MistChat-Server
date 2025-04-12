@@ -28,8 +28,8 @@ func NewHub() *Hub {
 	}
 }
 
-// run starts the hub's main loop
-func (h *Hub) run() {
+// Run starts the hub's main loop
+func (h *Hub) Run() {
 	for {
 		select {
 		case client := <-h.register:

@@ -23,7 +23,16 @@ func NewWebSockerRouter() *WebSockerRouter {
 	}
 }
 
-// WsHandler returns a gin.HandlerFunc that handles websocket connections
+// WsHandler godoc
+// @Summary WebSocket连接
+// @Description 建立WebSocket连接
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Param uuid query string true "用户ID"
+// @Param username query string false "用户名"
+// @Success 101 {string} string "Switching Protocols to websocket"
+// @Router /chat/connect [get]
 func (w *WebSockerRouter) WsHandler(hub *Hub) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serveWs(hub, c.Writer, c.Request)

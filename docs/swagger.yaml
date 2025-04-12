@@ -6,21 +6,44 @@ info:
   title: Parchment API
   version: "1.0"
 paths:
+  /chat/connect:
+    get:
+      consumes:
+      - application/json
+      description: 建立WebSocket连接
+      parameters:
+      - description: 用户ID
+        in: query
+        name: uuid
+        required: true
+        type: string
+      - description: 用户名
+        in: query
+        name: username
+        type: string
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: Switching Protocols to websocket
+          schema:
+            type: string
+      summary: WebSocket连接
+      tags:
+      - Chat
   /example/hello_world:
     get:
       consumes:
       - application/json
-      description: 测试接口
+      description: 返回 Hello World
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Hello World
           schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: 测试接口
+            type: string
+      summary: Hello World
       tags:
       - example
 swagger: "2.0"
