@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="zh-CN" class="dark">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chat Example</title>
+    <title>聊天示例</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -13,35 +13,45 @@
     <link rel="stylesheet" href="style.css" />
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 h-screen flex flex-col">
-<div id="log" class="flex-1 overflow-y-auto p-4 space-y-2 bg-white dark:bg-gray-800 text-sm sm:text-base"></div>
+<div id="log" class="flex-1 overflow-y-auto p-4 space-y-2 bg-white dark:bg-gray-800 text-sm sm:text-base rounded-md m-2"></div>
 
-<div class="p-4 bg-white dark:bg-gray-800 border-t border-gray-300 dark:border-gray-700 flex flex-col gap-2 sm:flex-row sm:items-end">
+<div class="p-4 bg-white dark:bg-gray-800 border-t border-gray-300 dark:border-gray-700 flex flex-col gap-2 sm:flex-row sm:items-end m-2 rounded-md">
     <div class="flex gap-2 flex-col sm:flex-row sm:items-center w-full sm:w-auto">
-        <input type="text" id="uid" placeholder="Enter UID"
+        <input type="text" id="uid" placeholder="输入用户ID"
                class="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-40" />
 
-        <input type="text" id="username" placeholder="Enter Username"
+        <input type="text" id="username" placeholder="输入用户名"
                class="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-40" />
 
         <button id="connect"
                 class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition w-full sm:w-auto">
-            Connect
+            连接
         </button>
         <button id="disconnect"
                 class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition w-full sm:w-auto">
-            Disconnect
+            断开
         </button>
     </div>
 
     <form id="form" class="flex gap-2 w-full mt-2 sm:mt-0">
-        <input type="text" id="msg" placeholder="Type a message..."
-               class="flex-grow px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="submit" value="Send"
-               class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition" />
+        <div class="w-full">
+            <div class="flex gap-2 mb-2">
+                <select id="msgType" class="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="text">文本消息</option>
+                    <option value="system">系统消息</option>
+                </select>
+                <input type="text" id="destination" placeholder="接收者ID（可选）" 
+                       class="flex-grow px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div class="flex gap-2">
+                <input type="text" id="msg" placeholder="输入消息内容..."
+                       class="flex-grow px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="submit" value="发送"
+                       class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition font-semibold" />
+            </div>
+        </div>
     </form>
 </div>
-
-
 
 <script src="main.js"></script>
 </body>

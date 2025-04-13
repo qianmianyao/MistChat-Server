@@ -108,6 +108,10 @@ func (h *Hub) SendToSpecificClient(uuid, roomUUID string, message []byte) {
 	var clients []*Client
 	for _, uid := range users {
 		if client, ok := usersClients[uid]; ok {
+			// 不对自己发送消息
+			if client.uuid == uuid {
+				continue
+			}
 			clients = append(clients, client)
 		}
 	}
