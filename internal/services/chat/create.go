@@ -31,11 +31,12 @@ func (c *Create) User(username, uuid string) error {
 }
 
 // Room create room
-func (c *Create) Room(roomName, roomUUID string) error {
+func (c *Create) Room(roomName, roomUUID, password string, isprivate bool) error {
 	room := entity.Room{
 		UUID:      roomUUID,
 		Name:      roomName,
-		Isprivate: false,
+		Password:  password,
+		Isprivate: isprivate,
 	}
 	if err := c.db.Create(&room).Error; err != nil {
 		global.Logger.Error("创建房间失败: ", zap.Error(err))

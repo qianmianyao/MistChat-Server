@@ -10,15 +10,19 @@ type Status string
 type PasswordType string
 type RoomStatus string
 
+type VerificationResults bool
+
 const (
-	UserExist    Status       = "exist"
-	UserNotExist Status       = "not_exist"
-	RoomExist    Status       = "room_exist"
-	RoomNotExist Status       = "room_not_exist"
-	NoPassword   PasswordType = "no_password"
-	NeedPassword PasswordType = "need_password"
-	InRoom       RoomStatus   = "in_room"
-	NotInRoom    RoomStatus   = "not_in_room"
+	UserExist         Status              = "exist"
+	UserNotExist      Status              = "not_exist"
+	RoomExist         Status              = "room_exist"
+	RoomNotExist      Status              = "room_not_exist"
+	NoPassword        PasswordType        = "no_password"
+	NeedPassword      PasswordType        = "need_password"
+	InRoom            RoomStatus          = "in_room"
+	NotInRoom         RoomStatus          = "not_in_room"
+	PasswordCorrect   VerificationResults = true
+	PasswordIncorrect VerificationResults = false
 )
 
 type Find struct {
@@ -82,4 +86,16 @@ func (f *Find) AllUsersInTheRoom(roomUUID string) []string {
 		usersUUID = append(usersUUID, roomMember.ChatUserUUID)
 	}
 	return usersUUID
+}
+
+// VerifyPassword 验证房间密码
+func (f *Find) VerifyPassword(roomUUID, password string) VerificationResults {
+	var room entity.Room
+	if err := f.db.Where("uuid = ? AND password = ?", roomUUID, password).First(&room).Error; err != nil {
+		return PasswordIncorrect
+	}
+	if room.Password == password {
+		return PasswordCorrect
+	}
+	return PasswordIncorrect
 }

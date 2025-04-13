@@ -16,6 +16,7 @@ type Room struct {
 	gorm.Model
 	UUID      string `gorm:"uniqueIndex;not null"`
 	Name      string `gorm:"not null"`
+	Password  string `gorm:"column:password"`
 	Isprivate bool   `gorm:"not null,default:false"`
 }
 

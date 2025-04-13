@@ -5,6 +5,15 @@
 swag init -g ./cmd/server/main.go --parseDepth 2 --parseDependency -o ./docs
 ```
 
+# 生成私钥
+openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
+
+# 提取公钥（给前端）
+openssl rsa -pubout -in private.pem -out public.pem
+
+# 一次性签名
+用户输入密码 → bcrypt → 签名 + salt + timestamp → 发到后端 → 后端验证签名 + bcrypt 校验
+
 ## 项目结构说明
 ```text
 project/

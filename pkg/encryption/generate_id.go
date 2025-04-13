@@ -4,10 +4,9 @@ import (
 	"crypto/hmac"
 	crand "crypto/rand"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/binary"
 	"errors"
-
+	"github.com/btcsuite/btcutil/base58"
 	"time"
 )
 
@@ -19,7 +18,7 @@ const (
 	signSize = 8
 )
 
-// GenerateUID 生成带签名的 UID，不含用户名信息
+// GenerateUID 使用 Base58 编码生成 UID
 func GenerateUID(prefix string) (string, error) {
 	salt := make([]byte, saltSize)
 	if _, err := crand.Read(salt); err != nil {
@@ -29,32 +28,24 @@ func GenerateUID(prefix string) (string, error) {
 	ts := make([]byte, tsSize)
 	binary.BigEndian.PutUint64(ts, uint64(time.Now().UnixNano()))
 
-	// payload = salt + timestamp
 	payload := append(salt, ts...)
 
-	// 签名
 	mac := hmac.New(sha256.New, secret)
 	mac.Write(payload)
 	signature := mac.Sum(nil)[:signSize]
 
-	// 完整数据 = payload + signature
 	full := append(payload, signature...)
-
-	// 编码成 UID 字符串
-	uid := base64.RawURLEncoding.EncodeToString(full)
+	uid := base58.Encode(full)
 	return prefix + uid, nil
 }
 
+// ValidateUID 校验 Base58 编码的 UID
 func ValidateUID(uid, prefix string) (bool, error) {
 	if len(uid) <= len(prefix) || uid[:len(prefix)] != prefix {
 		return false, errors.New("invalid prefix")
 	}
 
-	raw, err := base64.RawURLEncoding.DecodeString(uid[len(prefix):])
-	if err != nil {
-		return false, err
-	}
-
+	raw := base58.Decode(uid[len(prefix):])
 	if len(raw) < saltSize+tsSize+signSize {
 		return false, errors.New("uid too short")
 	}
@@ -62,7 +53,6 @@ func ValidateUID(uid, prefix string) (bool, error) {
 	payload := raw[:saltSize+tsSize]
 	sig := raw[saltSize+tsSize:]
 
-	// 重新签名
 	mac := hmac.New(sha256.New, secret)
 	mac.Write(payload)
 	expectedSig := mac.Sum(nil)[:signSize]
@@ -70,6 +60,5 @@ func ValidateUID(uid, prefix string) (bool, error) {
 	if hmac.Equal(sig, expectedSig) {
 		return true, nil
 	}
-
 	return false, errors.New("signature mismatch")
 }

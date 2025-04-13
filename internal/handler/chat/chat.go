@@ -13,9 +13,16 @@ type WebSockerRouter struct {
 	chatFind   *chat.Find
 }
 
-type JoinRoomParams struct {
-	RoomUUID string `form:"room_uuid" binding:"required"`
-	UserUUID string `form:"user_uuid" binding:"required"`
+type JoinRoomData struct {
+	RoomUUID string `json:"room_uuid" binding:"required"`
+	UserUUID string `json:"user_uuid" binding:"required"`
+	Password string `json:"password"`
+}
+
+type CreateRoomData struct {
+	UserUUID string `json:"user_uuid" binding:"required"`
+	RoomName string `json:"room_name" binding:"required"`
+	Password string `json:"password"`
 }
 
 func NewWebSockerRouter() *WebSockerRouter {
@@ -40,75 +47,68 @@ func (w *WebSockerRouter) WsHandler(hub *websocket.Hub) gin.HandlerFunc {
 	}
 }
 
-// CheckRoomPasswordRequired checks if room password is required
-// @Summary 检查房间是否需要密码
-// @Description 检查房间是否需要密码
-// @Tags Chat
-// @Accept json
-// @Produce json
-// @Param room_uuid query string true "房间ID"
-// @Param user_uuid query string true "用户ID"
-// @Success 200 {object} utils.Response{data=string} "返回结果"
-// @Router /chat/check_room_password [get]
+// CheckRoomPasswordRequired 检查房间密码是否需要
 func (w *WebSockerRouter) CheckRoomPasswordRequired(c *gin.Context) {
-	var params JoinRoomParams
-	if err := c.ShouldBindQuery(&params); err != nil {
+	var data JoinRoomData
+	if err := c.ShouldBindJSON(&data); err != nil {
 		utils.ErrorWithDefault(c)
 		return
 	}
 
-	user := w.chatFind.IsUserExist(params.UserUUID)
-	if user == chat.UserNotExist {
+	roomExist := w.chatFind.IsRoomExist(data.RoomUUID)
+	if roomExist == chat.RoomNotExist {
 		utils.ErrorWithDefault(c)
 		return
 	}
 
-	room := w.chatFind.IsRoomExist(params.RoomUUID)
-	switch room {
-	case chat.RoomExist:
-		roomStatus := w.chatFind.IsTheUserIsInTheRoom(params.UserUUID, params.RoomUUID)
-		if roomStatus == chat.NotInRoom {
-			roomPassword := w.chatFind.IsRequirePassword(params.RoomUUID)
-			if roomPassword == chat.NeedPassword {
-				utils.FailWithDefault(c, "需要密码")
-				return
-			}
-		}
-	case chat.RoomNotExist:
-		// 如果房间不存在就直接创建
-		roomId, err := encryption.GenerateUID("r_")
-		if err != nil {
-			utils.ErrorWithDefault(c)
-			return
-		}
-		if err := w.chatCreate.Room(roomId, roomId); err != nil {
-			utils.ErrorWithDefault(c)
-			return
-		}
-		utils.Success(c, map[string]string{"roomUUID": roomId}, "房间不存在，已自动创建")
+	passwordExist := w.chatFind.IsRequirePassword(data.RoomUUID)
+	if passwordExist == chat.NeedPassword {
+		utils.FailWithDefault(c, "需要密码")
+		return
 	}
-	utils.SuccessWithDefault(c, "不需要密码")
+}
+
+// CreateRoom 创建房间
+func (w *WebSockerRouter) CreateRoom(c *gin.Context) {
+	var data CreateRoomData
+	if err := c.ShouldBindJSON(&data); err != nil {
+		utils.ErrorWithDefault(c)
+		return
+	}
+
+	var isprivate = false
+	if data.Password != "" {
+		isprivate = true
+	}
+
+	roomId, _ := encryption.GenerateUID("r_")
+	if err := w.chatCreate.Room(data.RoomName, roomId, data.Password, isprivate); err != nil {
+		utils.ErrorWithDefault(c)
+		return
+	}
+	if err := w.chatCreate.RoomMembers(data.UserUUID, roomId); err != nil {
+		utils.ErrorWithDefault(c)
+		return
+	}
+	utils.SuccessWithDefault(c, map[string]string{"roomUUID": roomId})
 	return
 }
 
-// JoinRoom handles joining a room
-// @Summary 加入房间
-// @Description 加入房间
-// @Tags Chat
-// @Accept json
-// @Produce json
-// @Param room_uuid body string true "房间ID"
-// @Param user_uuid body string true "用户ID"
-// @Success 200 {object} utils.Response{data=string} "返回结果"
-// @Router /chat/join_room [post]
+// JoinRoom 加入房间
 func (w *WebSockerRouter) JoinRoom(c *gin.Context) {
-	var params JoinRoomParams
-	if err := c.ShouldBindJSON(&params); err != nil {
+	var data JoinRoomData
+	if err := c.ShouldBindJSON(&data); err != nil {
 		utils.ErrorWithDefault(c)
 		return
 	}
 
-	if err := w.chatCreate.RoomMembers(params.UserUUID, params.RoomUUID); err != nil {
+	verificationResults := w.chatFind.VerifyPassword(data.RoomUUID, data.Password)
+	if verificationResults == chat.PasswordIncorrect {
+		utils.FailWithDefault(c, "密码错误")
+		return
+	}
+
+	if err := w.chatCreate.RoomMembers(data.UserUUID, data.RoomUUID); err != nil {
 		utils.ErrorWithDefault(c)
 		return
 	}

@@ -25,6 +25,7 @@ func RegisterWebSocketRoutes(r *gin.RouterGroup) {
 	hub := websocket.NewHub()
 	go hub.Run()
 	r.GET("/connect", chat.NewWebSockerRouter().WsHandler(hub))
-	r.GET("/check_room_password", chat.NewWebSockerRouter().CheckRoomPasswordRequired)
-	r.GET("/join_room", chat.NewWebSockerRouter().JoinRoom)
+	r.POST("/check_room_password", chat.NewWebSockerRouter().CheckRoomPasswordRequired)
+	r.POST("/join_room", chat.NewWebSockerRouter().JoinRoom)
+	r.POST("/create_room", chat.NewWebSockerRouter().CreateRoom)
 }
