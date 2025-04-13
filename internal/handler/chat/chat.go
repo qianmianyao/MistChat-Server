@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/qianmianyao/parchment-server/internal/services/chat"
 	"github.com/qianmianyao/parchment-server/internal/websocket"
+	"github.com/qianmianyao/parchment-server/pkg/encryption"
 	"github.com/qianmianyao/parchment-server/pkg/utils"
 )
 
@@ -30,7 +31,6 @@ func NewWebSockerRouter() *WebSockerRouter {
 // @Tags Chat
 // @Accept json
 // @Produce json
-// @Param uuid query string true "用户ID"
 // @Param username query string false "用户名"
 // @Success 101 {string} string "Switching Protocols to websocket"
 // @Router /chat/connect [get]
@@ -76,16 +76,16 @@ func (w *WebSockerRouter) CheckRoomPasswordRequired(c *gin.Context) {
 		}
 	case chat.RoomNotExist:
 		// 如果房间不存在就直接创建
-		if err := w.chatCreate.Room(params.RoomUUID, params.RoomUUID); err != nil {
+		roomId, err := encryption.GenerateUID("r_")
+		if err != nil {
 			utils.ErrorWithDefault(c)
 			return
 		}
-		if err := w.chatCreate.RoomMembers(params.UserUUID, params.RoomUUID); err != nil {
+		if err := w.chatCreate.Room(roomId, roomId); err != nil {
 			utils.ErrorWithDefault(c)
 			return
 		}
-		utils.SuccessWithDefault(c, "加入房间成功")
-		return
+		utils.Success(c, map[string]string{"roomUUID": roomId}, "房间不存在，已自动创建")
 	}
 	utils.SuccessWithDefault(c, "不需要密码")
 	return

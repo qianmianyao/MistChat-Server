@@ -3,13 +3,13 @@ package websocket
 import (
 	"bytes"
 	"fmt"
+	"github.com/gorilla/websocket"
+	"github.com/qianmianyao/parchment-server/internal/websocket/message_type"
+	"github.com/qianmianyao/parchment-server/pkg/encryption"
+	"github.com/qianmianyao/parchment-server/pkg/global"
 	"log"
 	"net/http"
 	"time"
-
-	"github.com/gorilla/websocket"
-	"github.com/qianmianyao/parchment-server/internal/websocket/message_type"
-	"github.com/qianmianyao/parchment-server/pkg/global"
 )
 
 const (
@@ -142,12 +142,15 @@ func (c *Client) writePump() {
 
 // ServeWs handles websocket requests from the peer
 func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
-	// user uuid
-	uid := r.URL.Query().Get("uid")
 	username := r.URL.Query().Get("username")
+	uid := r.URL.Query().Get("uid")
 
 	if uid == "" {
-		http.Error(w, "Missing uid", http.StatusBadRequest)
+		uid, _ = encryption.GenerateUID("u_")
+	}
+	// 验证 UID 的合法性
+	if ok, err := encryption.ValidateUID(uid, "u_"); err != nil || !ok {
+		http.Error(w, "invalid uid", http.StatusBadRequest)
 		return
 	}
 
@@ -159,7 +162,7 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), uuid: uid, username: username}
 	client.hub.register <- client
 
-	welcomeMessage, err := message_type.NewSystemMessage(fmt.Sprintf("Welcome User %v", uid)).SerializeWithArgs()
+	welcomeMessage, err := message_type.NewSystemMessage(fmt.Sprintf("%v;%v", uid, username)).SerializeWithArgs()
 	client.send <- welcomeMessage
 
 	// Allow collection of memory referenced by the caller by doing all work in
