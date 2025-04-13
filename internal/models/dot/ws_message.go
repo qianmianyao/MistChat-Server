@@ -43,7 +43,7 @@ type ReadStatus struct {
 
 type Envelope struct {
 	Source      Source      `json:"source"`
-	Message     DataMessage `json:"message_type"`
+	Message     DataMessage `json:"message"`
 	ReadStatus  *ReadStatus `json:"readStatus,omitempty"`
 	Destination string      `json:"destination"`
 	Timestamp   time.Time   `json:"timestamp"`

@@ -68,6 +68,8 @@ func (c *Client) readPump() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+		// 这里对读取的消息进行处理
+		global.Logger.Debug(fmt.Sprintf("recv: %v", c))
 		c.hub.broadcast <- message
 	}
 
@@ -142,7 +144,7 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), uuid: uid, username: username}
 	client.hub.register <- client
 
-	welcomeMessage, err := message_type.NewSystemMessage(fmt.Sprintf("Welcome User %v", uid)).Serialize()
+	welcomeMessage, err := message_type.NewSystemMessage(fmt.Sprintf("Welcome User %v", uid)).SerializeWithArgs()
 	client.send <- welcomeMessage
 
 	// Allow collection of memory referenced by the caller by doing all work in
