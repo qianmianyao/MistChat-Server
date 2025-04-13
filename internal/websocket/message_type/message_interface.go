@@ -3,6 +3,7 @@ package message_type
 import (
 	"encoding/json"
 	"errors"
+
 	"github.com/qianmianyao/parchment-server/internal/models/dot"
 )
 
@@ -14,7 +15,7 @@ type Message interface {
 	GetType() dot.MessageType
 	LoadFromEnvelope(dot.Envelope) error
 	SerializeWithArgs(args ...any) ([]byte, error)
-	Deserialize([]byte) error
+	Deserialize([]byte) (dot.Envelope, error)
 }
 
 // BaseMessage 提供泛型基础实现
@@ -39,10 +40,11 @@ func (bm *BaseMessage[T]) SerializeWithArgs(args ...any) ([]byte, error) {
 	return nil, errors.New("child didn't come true StructureMessage(...any)")
 }
 
-func (bm *BaseMessage[T]) Deserialize(data []byte) error {
+func (bm *BaseMessage[T]) Deserialize(data []byte) (dot.Envelope, error) {
 	var env dot.Envelope
 	if err := json.Unmarshal(data, &env); err != nil {
-		return err
+		return env, err
 	}
-	return bm.child.LoadFromEnvelope(env)
+	err := bm.child.LoadFromEnvelope(env)
+	return env, err
 }

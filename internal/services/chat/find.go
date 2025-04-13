@@ -72,3 +72,14 @@ func (f *Find) IsRequirePassword(uuid string) PasswordType {
 	}
 	return NeedPassword
 }
+
+// AllUsersInTheRoom 获取房间内所有用户
+func (f *Find) AllUsersInTheRoom(roomUUID string) []string {
+	var roomMembers []entity.RoomMembers
+	f.db.Model(&entity.RoomMembers{}).Where("room_uuid = ?", roomUUID).Find(&roomMembers)
+	var usersUUID []string
+	for _, roomMember := range roomMembers {
+		usersUUID = append(usersUUID, roomMember.ChatUserUUID)
+	}
+	return usersUUID
+}

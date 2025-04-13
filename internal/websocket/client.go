@@ -3,12 +3,13 @@ package websocket
 import (
 	"bytes"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"github.com/qianmianyao/parchment-server/internal/websocket/message_type"
-	"github.com/qianmianyao/parchment-server/pkg/global"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/websocket"
+	"github.com/qianmianyao/parchment-server/internal/websocket/message_type"
+	"github.com/qianmianyao/parchment-server/pkg/global"
 )
 
 const (
@@ -70,9 +71,23 @@ func (c *Client) readPump() {
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		// 这里对读取的消息进行处理
 		global.Logger.Debug(fmt.Sprintf("recv: %v", c))
-		c.hub.broadcast <- message
-	}
 
+		// 使用消息解析器解析消息
+		_, envelope, err := message_type.ParseMessage(message)
+		if err != nil {
+			global.Logger.Warn(fmt.Sprintf("消息解析失败: %v", err))
+			continue
+		}
+
+		// 处理消息
+		// 如果消息有特定目标，则发送给特定客户端
+		if envelope.Destination != "all" && envelope.Destination != "" {
+			c.hub.SendToSpecificClient(envelope.Source.Uid, envelope.Destination, message)
+		} else {
+			// 否则广播给所有客户端
+			c.hub.broadcast <- message
+		}
+	}
 }
 
 // writePump writes messages to the websocket connection

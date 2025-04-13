@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"fmt"
+
 	"github.com/qianmianyao/parchment-server/internal/services/chat"
 	"github.com/qianmianyao/parchment-server/pkg/global"
 )
@@ -27,6 +28,8 @@ func NewHub() *Hub {
 		chatFind:   chat.NewFind(),
 	}
 }
+
+var usersClients = make(map[string]*Client)
 
 // Run starts the hub's main loop
 func (h *Hub) Run() {
@@ -56,6 +59,7 @@ func (h *Hub) clientRegister(client *Client) {
 		}
 	}
 	h.clients[client] = true
+	usersClients[client.uuid] = client
 	global.Logger.Debug(fmt.Sprintf("client %v connected", client))
 }
 
@@ -68,8 +72,9 @@ func (h *Hub) clientUnregister(client *Client) {
 				return
 			}
 		}
-
 		global.Logger.Debug(fmt.Sprintf("client %v disconnected", client))
+		// 从在线用户列表中删除
+		delete(usersClients, client.uuid)
 		delete(h.clients, client)
 		close(client.send)
 	}
@@ -81,6 +86,35 @@ func (h *Hub) Broadcast(message []byte) {
 		select {
 		case client.send <- message:
 			global.Logger.Debug(fmt.Sprintf("send to client: %v", client))
+		default:
+			close(client.send)
+			delete(h.clients, client)
+		}
+	}
+}
+
+// SendToSpecificClient 发送消息给指定客户端
+func (h *Hub) SendToSpecificClient(uuid, roomUUID string, message []byte) {
+	// 获取房间内所有的用户
+	users := h.chatFind.AllUsersInTheRoom(roomUUID)
+
+	roomstatus := h.chatFind.IsTheUserIsInTheRoom(uuid, roomUUID)
+	if roomstatus == chat.NotInRoom {
+		global.Logger.Debug(fmt.Sprintf("用户 %s 不在房间 %s 内", uuid, roomUUID))
+		return
+	}
+
+	// 获取房间内所有的在线用户
+	var clients []*Client
+	for _, uid := range users {
+		if client, ok := usersClients[uid]; ok {
+			clients = append(clients, client)
+		}
+	}
+	for _, client := range clients {
+		select {
+		case client.send <- message:
+			global.Logger.Debug(fmt.Sprintf("send to specific client: %v", client))
 		default:
 			close(client.send)
 			delete(h.clients, client)

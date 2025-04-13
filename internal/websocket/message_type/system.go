@@ -1,9 +1,8 @@
 package message_type
 
 import (
-	"time"
-
 	"github.com/qianmianyao/parchment-server/internal/models/dot"
+	"time"
 )
 
 type SystemMessage struct {
