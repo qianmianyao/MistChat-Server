@@ -41,6 +41,15 @@ func (w *WebSockerRouter) WsHandler(hub *websocket.Hub) gin.HandlerFunc {
 }
 
 // CheckRoomPasswordRequired checks if room password is required
+// @Summary 检查房间是否需要密码
+// @Description 检查房间是否需要密码
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Param room_uuid query string true "房间ID"
+// @Param user_uuid query string true "用户ID"
+// @Success 200 {object} utils.Response{data=string} "返回结果"
+// @Router /chat/check_room_password [get]
 func (w *WebSockerRouter) CheckRoomPasswordRequired(c *gin.Context) {
 	var params JoinRoomParams
 	if err := c.ShouldBindQuery(&params); err != nil {
@@ -67,17 +76,31 @@ func (w *WebSockerRouter) CheckRoomPasswordRequired(c *gin.Context) {
 		}
 	case chat.RoomNotExist:
 		// 如果房间不存在就直接创建
-		roomUuid := w.chatCreate.Room(params.RoomUUID, params.RoomUUID)
-		w.chatCreate.RoomMembers(params.UserUUID, roomUuid)
-		utils.SuccessWithDefault(c, "房间创建成功")
+		if err := w.chatCreate.Room(params.RoomUUID, params.RoomUUID); err != nil {
+			utils.ErrorWithDefault(c)
+			return
+		}
+		if err := w.chatCreate.RoomMembers(params.UserUUID, params.RoomUUID); err != nil {
+			utils.ErrorWithDefault(c)
+			return
+		}
+		utils.SuccessWithDefault(c, "加入房间成功")
 		return
 	}
-
 	utils.SuccessWithDefault(c, "不需要密码")
 	return
 }
 
 // JoinRoom handles joining a room
+// @Summary 加入房间
+// @Description 加入房间
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Param room_uuid body string true "房间ID"
+// @Param user_uuid body string true "用户ID"
+// @Success 200 {object} utils.Response{data=string} "返回结果"
+// @Router /chat/join_room [post]
 func (w *WebSockerRouter) JoinRoom(c *gin.Context) {
 	var params JoinRoomParams
 	if err := c.ShouldBindJSON(&params); err != nil {
@@ -85,8 +108,10 @@ func (w *WebSockerRouter) JoinRoom(c *gin.Context) {
 		return
 	}
 
-	w.chatCreate.RoomMembers(params.UserUUID, params.RoomUUID)
-
+	if err := w.chatCreate.RoomMembers(params.UserUUID, params.RoomUUID); err != nil {
+		utils.ErrorWithDefault(c)
+		return
+	}
 	utils.SuccessWithDefault(c, nil)
 	return
 }

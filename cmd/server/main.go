@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/qianmianyao/parchment-server/api/v1"
+	"github.com/qianmianyao/parchment-server/pkg/database"
 
 	"github.com/qianmianyao/parchment-server/pkg/config"
 	"github.com/qianmianyao/parchment-server/pkg/global"
@@ -29,7 +30,7 @@ func initComponents() {
 	logger.InitLogger()
 
 	// 初始化数据库
-	//database.InitDB()
+	database.InitDB()
 
 	// 所有组件都已初始化，现在可以通过 global 包访问
 	global.Logger.Info("所有组件初始化完成")

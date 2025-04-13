@@ -1,4 +1,27 @@
 basePath: /api/v1
+definitions:
+  github_com_qianmianyao_parchment-server_pkg_utils.Response:
+    properties:
+      data:
+        description: 返回数据（可以为空）
+      message:
+        description: 提示信息
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.ResponseStatusCode'
+        description: 状态码
+    type: object
+  github_com_qianmianyao_parchment-server_pkg_utils.ResponseStatusCode:
+    enum:
+    - 0
+    - 1
+    - 2
+    type: integer
+    x-enum-varnames:
+    - SuccessCode
+    - ErrorCode
+    - FailCode
 host: localhost:8080
 info:
   contact: {}
@@ -6,6 +29,37 @@ info:
   title: Parchment API
   version: "1.0"
 paths:
+  /chat/check_room_password:
+    get:
+      consumes:
+      - application/json
+      description: 检查房间是否需要密码
+      parameters:
+      - description: 房间ID
+        in: query
+        name: room_uuid
+        required: true
+        type: string
+      - description: 用户ID
+        in: query
+        name: user_uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 返回结果
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: 检查房间是否需要密码
+      tags:
+      - Chat
   /chat/connect:
     get:
       consumes:

@@ -22,6 +22,6 @@ type Room struct {
 type RoomMembers struct {
 	gorm.Model
 	RoomUUID     string    `gorm:"index;not null"`
-	ChatUserUUID uint      `gorm:"index;not null"`
+	ChatUserUUID string    `gorm:"index;not null"`
 	JoinTime     time.Time `gorm:"not null"`
 }

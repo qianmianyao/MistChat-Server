@@ -22,7 +22,7 @@ func InitConfig() *config.Config {
 		v = viper.New()
 		v.SetConfigName("dev")
 		v.SetConfigType("yaml")
-		v.AddConfigPath(filepath.Join("/Users/zhoupeng/Downloads/parchment-server/", "config"))
+		v.AddConfigPath(filepath.Join("C:\\Users\\90412\\Desktop\\parchment\\parchment-server", "config"))
 
 		if err := v.ReadInConfig(); err != nil {
 			panic("Error reading config file: " + err.Error())

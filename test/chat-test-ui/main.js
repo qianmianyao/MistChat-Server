@@ -23,34 +23,6 @@ window.onload = function () {
 
     connectBtn.onclick = function () {
         if (conn) return;
-        if (!window["WebSocket"]) {
-            showMessage("Your browser does not support WebSockets.", true);
-            return;
-        }
-
-        conn = new WebSocket("ws://127.0.0.1:8080/api/v1/ws/connect");
-
-        conn.onopen = function () {
-            showMessage("Connected.", true);
-        };
-
-        conn.onclose = function () {
-            showMessage("Connection closed.", true);
-            conn = null;
-        };
-
-        conn.onmessage = function (evt) {
-            const messages = evt.data.split('\n');
-            for (let msg of messages) {
-                const item = document.createElement("div");
-                item.innerText = msg;
-                appendLog(item);
-            }
-        };
-    };
-
-    connectBtn.onclick = function () {
-        if (conn) return;
 
         const uid = encodeURIComponent(document.getElementById("uid").value.trim());
         const username = encodeURIComponent(document.getElementById("username").value.trim());
@@ -60,7 +32,7 @@ window.onload = function () {
         if (uid) params.append("uid", uid);
         if (username) params.append("username", username);
 
-        const wsUrl = `ws://127.0.0.1:8080/api/v1/ws/chat${params.toString() ? "?" + params.toString() : ""}`;
+        const wsUrl = `ws://127.0.0.1:8080/api/v1/chat/connect${params.toString() ? "?" + params.toString() : ""}`;
 
         if (!window["WebSocket"]) {
             showMessage("Your browser does not support WebSockets.", true);
@@ -87,8 +59,12 @@ window.onload = function () {
             }
         };
     };
-
-
+    
+    disconnectBtn.onclick = function () {
+        if (!conn) return;
+        conn.close();
+        showMessage("Disconnecting...", true);
+    };
 
     form.onsubmit = function () {
         if (!conn || !msg.value.trim()) return false;

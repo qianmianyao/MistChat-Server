@@ -15,6 +15,57 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/chat/check_room_password": {
+            "get": {
+                "description": "检查房间是否需要密码",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "检查房间是否需要密码",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "房间ID",
+                        "name": "room_uuid",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "用户ID",
+                        "name": "user_uuid",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "返回结果",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/chat/connect": {
             "get": {
                 "description": "建立WebSocket连接",
@@ -75,6 +126,41 @@ const docTemplate = `{
                     }
                 }
             }
+        }
+    },
+    "definitions": {
+        "github_com_qianmianyao_parchment-server_pkg_utils.Response": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "返回数据（可以为空）"
+                },
+                "message": {
+                    "description": "提示信息",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "状态码",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.ResponseStatusCode"
+                        }
+                    ]
+                }
+            }
+        },
+        "github_com_qianmianyao_parchment-server_pkg_utils.ResponseStatusCode": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2
+            ],
+            "x-enum-varnames": [
+                "SuccessCode",
+                "ErrorCode",
+                "FailCode"
+            ]
         }
     }
 }`
