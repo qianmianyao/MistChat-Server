@@ -85,7 +85,7 @@ func (c *Client) readPump() {
 			c.hub.SendToSpecificClient(envelope.Source.Uid, envelope.Destination, message)
 		} else {
 			// 否则广播给所有客户端
-			c.hub.broadcast <- message
+			//c.hub.broadcast <- message
 		}
 	}
 }
@@ -162,7 +162,7 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), uuid: uid, username: username}
 	client.hub.register <- client
 
-	welcomeMessage, err := message_type.NewSystemMessage(fmt.Sprintf("%v;%v", uid, username)).SerializeWithArgs()
+	welcomeMessage, err := message_type.NewSystemMessage(map[string]string{"usernam": username, "uid": uid}).SerializeWithArgs()
 	client.send <- welcomeMessage
 
 	// Allow collection of memory referenced by the caller by doing all work in

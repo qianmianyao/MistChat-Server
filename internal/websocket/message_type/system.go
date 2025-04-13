@@ -7,11 +7,11 @@ import (
 
 type SystemMessage struct {
 	BaseMessage[string]
-	Text string `json:"text"`
+	Data any `json:"data"`
 }
 
-func NewSystemMessage(text string) *SystemMessage {
-	msg := &SystemMessage{Text: text}
+func NewSystemMessage(data any) *SystemMessage {
+	msg := &SystemMessage{Data: data}
 	msg.MessageType = dot.SystemMessage
 	msg.BaseMessage.child = msg
 	return msg
@@ -26,7 +26,7 @@ func (sm *SystemMessage) StructureMessage(args ...any) *dot.Envelope {
 		Message: dot.DataMessage{
 			Type: dot.SystemMessage,
 			Content: dot.Content{
-				Text: sm.Text,
+				Data: sm.Data,
 			},
 		},
 		Destination: "all",
@@ -35,6 +35,6 @@ func (sm *SystemMessage) StructureMessage(args ...any) *dot.Envelope {
 }
 
 func (sm *SystemMessage) LoadFromEnvelope(env dot.Envelope) error {
-	sm.Text = env.Message.Content.Text
+	sm.Data = env.Message.Content.Text
 	return nil
 }

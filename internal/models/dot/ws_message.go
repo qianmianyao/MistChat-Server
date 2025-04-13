@@ -28,6 +28,7 @@ type Attachment struct {
 
 type Content struct {
 	Text       string      `json:"text,omitempty"`
+	Data       interface{} `json:"data,omitempty"`
 	Attachment *Attachment `json:"attachment,omitempty"`
 }
 
