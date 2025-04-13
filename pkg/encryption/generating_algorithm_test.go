@@ -24,7 +24,7 @@ func Test_generateUID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := generateUID(tt.args.username, "r_")
+			got, err := GenerateUID("r_")
 			if (err != nil) != tt.wantErr {
 				t.Errorf("generateUID() error = %v, wantErr %v", err, tt.wantErr)
 				return
