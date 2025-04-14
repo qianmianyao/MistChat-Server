@@ -28,5 +28,6 @@ func RegisterWebSocketRoutes(r *gin.RouterGroup) {
 	r.POST("/check_room_password", chat.NewWebSockerRouter().CheckRoomPasswordRequired)
 	r.POST("/join_room", chat.NewWebSockerRouter().JoinRoom)
 	r.POST("/create_room", chat.NewWebSockerRouter().CreateRoom)
-	r.POST("/save_signal_key", chat.NewWebSockerRouter().SaveSignalKey)
+	r.POST("/save_signal_prekey_bundle", chat.NewWebSockerRouter().SaveSignalKey)
+	r.GET("/get_signal_prekey_bundle/:cuid", chat.NewWebSockerRouter().GetSignalKey)
 }

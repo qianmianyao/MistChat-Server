@@ -25,3 +25,13 @@ func (u *Update) UserOnlineStatus(uuid string, isOnline bool) error {
 	}
 	return nil
 }
+
+// MarkUsed 标记 PreKey 为已使用
+func (f *Update) MarkUsed(preKeysID uint32) error {
+	err := f.db.Model(&entity.SignalPreKey{}).Where("pre_key_id = ?", preKeysID).Update("IsUsed", true).Error
+	if err != nil {
+		global.Logger.Error("标记 PreKey 为已使用失败: ", zap.Error(err))
+		return err
+	}
+	return nil
+}

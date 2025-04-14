@@ -99,3 +99,40 @@ func (f *Find) VerifyPassword(roomUUID, password string) VerificationResults {
 	}
 	return PasswordIncorrect
 }
+
+// ChatUserUUIDByID 根据用户ID获取用户UUID
+func (f *Find) ChatUserUUIDByID(id uint) string {
+	var user entity.ChatUser
+	if err := f.db.Where("id = ?", id).First(&user).Error; err != nil {
+		return ""
+	}
+	return user.UUID
+}
+
+// SignalIdentityKey 获取 SignalIdentityKey
+func (f *Find) SignalIdentityKey(uuid string) entity.SignalIdentityKey {
+	var signalIdentityKey entity.SignalIdentityKey
+	if err := f.db.Where("chat_user_uuid = ?", uuid).First(&signalIdentityKey).Error; err != nil {
+		return signalIdentityKey
+	}
+	return signalIdentityKey
+}
+
+// SignalSignedPreKey 获取 SignalSignedPreKey
+func (f *Find) SignalSignedPreKey(uuid string) entity.SignalSignedPreKey {
+	var signalSignedPreKey entity.SignalSignedPreKey
+	if err := f.db.Where("chat_user_uuid = ?", uuid).First(&signalSignedPreKey).Error; err != nil {
+		return signalSignedPreKey
+	}
+	return signalSignedPreKey
+}
+
+// SignalPreKey 获取 SignalPreKey
+func (f *Find) SignalPreKey(uuid string) (entity.SignalPreKey, error) {
+	var signalPreKey entity.SignalPreKey
+	err := f.db.Where("chat_user_uuid = ? AND is_used = ?", uuid, false).First(&signalPreKey).Error
+	if err != nil {
+		return signalPreKey, err
+	}
+	return signalPreKey, nil
+}

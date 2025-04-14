@@ -1,8 +1,8 @@
 package dot
 
 type Address struct {
-	Name     string `json:"name"`
-	DeviceId int    `json:"deviceId"`
+	UUID     string `json:"uuid,omitempty"`
+	DeviceId int    `json:"deviceId,omitempty"`
 }
 
 type SignedPreKey struct {
@@ -17,7 +17,7 @@ type PreKey struct {
 }
 
 type SignalData struct {
-	Address        Address      `json:"address"`
+	Address        *Address     `json:"address,omitempty"`
 	RegistrationId int          `json:"registrationId"`
 	IdentityKey    string       `json:"identityKey"`
 	SignedPreKey   SignedPreKey `json:"signedPreKey"`

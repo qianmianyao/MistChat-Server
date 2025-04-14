@@ -1,6 +1,8 @@
 package chat
 
 import (
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/qianmianyao/parchment-server/internal/models/dot"
 	"github.com/qianmianyao/parchment-server/internal/models/entity"
@@ -13,6 +15,7 @@ import (
 type WebSockerRouter struct {
 	chatCreate *chat.Create
 	chatFind   *chat.Find
+	chatUpdate *chat.Update
 }
 
 type UpdateKeyPair struct {
@@ -22,6 +25,7 @@ func NewWebSockerRouter() *WebSockerRouter {
 	return &WebSockerRouter{
 		chatCreate: chat.NewCreate(),
 		chatFind:   chat.NewFind(),
+		chatUpdate: chat.NewUpdate(),
 	}
 }
 
@@ -108,7 +112,7 @@ func (w *WebSockerRouter) JoinRoom(c *gin.Context) {
 	return
 }
 
-// SaveSignalKey 更新用户密钥对
+// SaveSignalKey 上传用户密钥对
 func (w *WebSockerRouter) SaveSignalKey(c *gin.Context) {
 	var data dot.SignalData
 	if err := c.ShouldBindJSON(&data); err != nil {
@@ -117,7 +121,7 @@ func (w *WebSockerRouter) SaveSignalKey(c *gin.Context) {
 	}
 
 	var signalIdentityKey = entity.SignalIdentityKey{
-		ChatUserUUID:   data.Address.Name,
+		ChatUserUUID:   data.Address.UUID,
 		RegistrationID: uint32(data.RegistrationId),
 		IdentityKey:    data.IdentityKey,
 	}
@@ -128,7 +132,7 @@ func (w *WebSockerRouter) SaveSignalKey(c *gin.Context) {
 	}
 
 	var signalSignedPreKey = entity.SignalSignedPreKey{
-		ChatUserUUID:        data.Address.Name,
+		ChatUserUUID:        data.Address.UUID,
 		PreKeyID:            uint32(data.PreKey.Id),
 		PreKeyPublic:        data.PreKey.PublicKey,
 		PreKeySignature:     data.SignedPreKey.Signature,
@@ -142,7 +146,7 @@ func (w *WebSockerRouter) SaveSignalKey(c *gin.Context) {
 	}
 
 	var signalPreKey = entity.SignalPreKey{
-		ChatUserUUID: data.Address.Name,
+		ChatUserUUID: data.Address.UUID,
 		PreKeyID:     uint32(data.PreKey.Id),
 		PreKeyPublic: data.PreKey.PublicKey,
 		IsUsed:       false,
@@ -155,4 +159,42 @@ func (w *WebSockerRouter) SaveSignalKey(c *gin.Context) {
 
 	utils.SuccessWithDefault(c, nil)
 	return
+}
+
+// GetSignalKey 获取用户密钥对
+func (w *WebSockerRouter) GetSignalKey(c *gin.Context) {
+	cuid := c.Param("cuid")
+	num, err := strconv.ParseUint(cuid, 10, 0)
+	if err != nil {
+		utils.ErrorWithDefault(c)
+		return
+	}
+	uuid := w.chatFind.ChatUserUUIDByID(uint(num))
+
+	signalIdentityKey := w.chatFind.SignalIdentityKey(uuid)
+	signalSignedPreKey := w.chatFind.SignalSignedPreKey(uuid)
+	signalPreKey, err := w.chatFind.SignalPreKey(uuid)
+	if err != nil {
+		utils.ErrorWithDefault(c)
+		return
+	}
+	var data = dot.SignalData{
+		Address:        nil,
+		RegistrationId: int(signalIdentityKey.RegistrationID),
+		IdentityKey:    signalIdentityKey.IdentityKey,
+		SignedPreKey: dot.SignedPreKey{
+			Id:        int(signalSignedPreKey.PreKeyID),
+			PublicKey: signalSignedPreKey.PreKeyPublic,
+			Signature: signalSignedPreKey.PreKeySignature,
+		},
+		PreKey: dot.PreKey{
+			Id:        int(signalPreKey.PreKeyID),
+			PublicKey: signalPreKey.PreKeyPublic,
+		},
+	}
+	if err := w.chatUpdate.MarkUsed(signalPreKey.PreKeyID); err != nil {
+		utils.ErrorWithDefault(c)
+		return
+	}
+	utils.SuccessWithDefault(c, &data)
 }
