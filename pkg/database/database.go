@@ -35,6 +35,9 @@ func InitDB() *gorm.DB {
 			&entity.ChatUser{},
 			&entity.Room{},
 			&entity.RoomMembers{},
+			&entity.SignalIdentityKey{},
+			&entity.SignalSignedPreKey{},
+			&entity.SignalPreKey{},
 		}
 
 		if err := db.AutoMigrate(models...); err != nil {

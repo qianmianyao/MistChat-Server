@@ -58,3 +58,30 @@ func (c *Create) RoomMembers(uuid, roomUUID string) error {
 	}
 	return nil
 }
+
+// SignalIdentityKey 身份密钥
+func (c *Create) SignalIdentityKey(signalIdentityKey entity.SignalIdentityKey) error {
+	if err := c.db.Create(&signalIdentityKey).Error; err != nil {
+		global.Logger.Error("创建 SignalIdentityKey 失败: ", zap.Error(err))
+		return err
+	}
+	return nil
+}
+
+// SignalSignedPreKey 预签名密钥
+func (c *Create) SignalSignedPreKey(signalSignedPreKey entity.SignalSignedPreKey) error {
+	if err := c.db.Create(&signalSignedPreKey).Error; err != nil {
+		global.Logger.Error("创建 SignalSignedPreKey 失败: ", zap.Error(err))
+		return err
+	}
+	return nil
+}
+
+// SignalPreKey 一次性密钥
+func (c *Create) SignalPreKey(signalPreKey entity.SignalPreKey) error {
+	if err := c.db.Create(&signalPreKey).Error; err != nil {
+		global.Logger.Error("创建 SignalPreKey 失败: ", zap.Error(err))
+		return err
+	}
+	return nil
+}

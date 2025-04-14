@@ -17,6 +17,7 @@ func NewUpdate() *Update {
 	}
 }
 
+// UserOnlineStatus 更新用户在线状态
 func (u *Update) UserOnlineStatus(uuid string, isOnline bool) error {
 	err := u.db.Model(&entity.ChatUser{}).Where("uuid = ?", uuid).Update("IsOnline", isOnline).Error
 	if err != nil {

@@ -2,6 +2,8 @@ package chat
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/qianmianyao/parchment-server/internal/models/dot"
+	"github.com/qianmianyao/parchment-server/internal/models/entity"
 	"github.com/qianmianyao/parchment-server/internal/services/chat"
 	"github.com/qianmianyao/parchment-server/internal/websocket"
 	"github.com/qianmianyao/parchment-server/pkg/encryption"
@@ -13,16 +15,7 @@ type WebSockerRouter struct {
 	chatFind   *chat.Find
 }
 
-type JoinRoomData struct {
-	RoomUUID string `json:"room_uuid" binding:"required"`
-	UserUUID string `json:"user_uuid" binding:"required"`
-	Password string `json:"password"`
-}
-
-type CreateRoomData struct {
-	UserUUID string `json:"user_uuid" binding:"required"`
-	RoomName string `json:"room_name" binding:"required"`
-	Password string `json:"password"`
+type UpdateKeyPair struct {
 }
 
 func NewWebSockerRouter() *WebSockerRouter {
@@ -49,7 +42,7 @@ func (w *WebSockerRouter) WsHandler(hub *websocket.Hub) gin.HandlerFunc {
 
 // CheckRoomPasswordRequired 检查房间密码是否需要
 func (w *WebSockerRouter) CheckRoomPasswordRequired(c *gin.Context) {
-	var data JoinRoomData
+	var data dot.JoinRoomData
 	if err := c.ShouldBindJSON(&data); err != nil {
 		utils.ErrorWithDefault(c)
 		return
@@ -70,7 +63,7 @@ func (w *WebSockerRouter) CheckRoomPasswordRequired(c *gin.Context) {
 
 // CreateRoom 创建房间
 func (w *WebSockerRouter) CreateRoom(c *gin.Context) {
-	var data CreateRoomData
+	var data dot.CreateRoomData
 	if err := c.ShouldBindJSON(&data); err != nil {
 		utils.ErrorWithDefault(c)
 		return
@@ -96,12 +89,11 @@ func (w *WebSockerRouter) CreateRoom(c *gin.Context) {
 
 // JoinRoom 加入房间
 func (w *WebSockerRouter) JoinRoom(c *gin.Context) {
-	var data JoinRoomData
+	var data dot.JoinRoomData
 	if err := c.ShouldBindJSON(&data); err != nil {
 		utils.ErrorWithDefault(c)
 		return
 	}
-
 	verificationResults := w.chatFind.VerifyPassword(data.RoomUUID, data.Password)
 	if verificationResults == chat.PasswordIncorrect {
 		utils.FailWithDefault(c, "密码错误")
@@ -112,6 +104,55 @@ func (w *WebSockerRouter) JoinRoom(c *gin.Context) {
 		utils.ErrorWithDefault(c)
 		return
 	}
+	utils.SuccessWithDefault(c, nil)
+	return
+}
+
+// SaveSignalKey 更新用户密钥对
+func (w *WebSockerRouter) SaveSignalKey(c *gin.Context) {
+	var data dot.SignalData
+	if err := c.ShouldBindJSON(&data); err != nil {
+		utils.ErrorWithDefault(c)
+		return
+	}
+
+	var signalIdentityKey = entity.SignalIdentityKey{
+		ChatUserUUID:   data.Address.Name,
+		RegistrationID: uint32(data.RegistrationId),
+		IdentityKey:    data.IdentityKey,
+	}
+	// 创建身份密钥
+	if err := w.chatCreate.SignalIdentityKey(signalIdentityKey); err != nil {
+		utils.ErrorWithDefault(c)
+		return
+	}
+
+	var signalSignedPreKey = entity.SignalSignedPreKey{
+		ChatUserUUID:        data.Address.Name,
+		PreKeyID:            uint32(data.PreKey.Id),
+		PreKeyPublic:        data.PreKey.PublicKey,
+		PreKeySignature:     data.SignedPreKey.Signature,
+		ValidUntilTimestamp: 0,
+		IsActive:            true,
+	}
+	// 创建预签名密钥
+	if err := w.chatCreate.SignalSignedPreKey(signalSignedPreKey); err != nil {
+		utils.ErrorWithDefault(c)
+		return
+	}
+
+	var signalPreKey = entity.SignalPreKey{
+		ChatUserUUID: data.Address.Name,
+		PreKeyID:     uint32(data.PreKey.Id),
+		PreKeyPublic: data.PreKey.PublicKey,
+		IsUsed:       false,
+	}
+	// 创建一次性密钥
+	if err := w.chatCreate.SignalPreKey(signalPreKey); err != nil {
+		utils.ErrorWithDefault(c)
+		return
+	}
+
 	utils.SuccessWithDefault(c, nil)
 	return
 }
