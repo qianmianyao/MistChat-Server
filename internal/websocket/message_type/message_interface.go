@@ -17,7 +17,6 @@ type Message interface {
 }
 
 // BaseMessage 为实现 Message 接口的类型提供了一个泛型基础结构。
-// T 是特定消息类型的数据结构。
 type BaseMessage[T any] struct {
 	MessageType dot.MessageType // 消息的具体类型。
 	Data        T               // 消息携带的数据。

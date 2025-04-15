@@ -20,7 +20,7 @@ func SetupRouter(r *gin.Engine) {
 	}
 }
 
-// RegisterWebSocketRoutes registers the WebSocket routes with the provided Gin engine.
+// RegisterWebSocketRoutes 使用提供的Gin引擎注册WebSocket路由
 func RegisterWebSocketRoutes(r *gin.RouterGroup) {
 	hub := websocket.NewHub()
 	go hub.Run()

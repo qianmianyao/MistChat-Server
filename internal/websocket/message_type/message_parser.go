@@ -37,7 +37,6 @@ func ParseMessage(data []byte) (Message, dot.Envelope, error) {
 
 // ParseMessageType 从原始的 JSON 格式数据中仅解析出消息类型。
 func ParseMessageType(data []byte) (dot.MessageType, error) {
-	// 创建一个临时结构体只包含必要的字段，提高解析效率
 	type EnvelopeType struct {
 		Message struct {
 			Type dot.MessageType `json:"type"`

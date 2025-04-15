@@ -26,7 +26,6 @@ type TextMessage struct {
 func NewTextMessage(text string) *TextMessage {
 	msg := &TextMessage{Text: text}
 	msg.MessageType = dot.TextMessage
-	// 将自身注入到 BaseMessage 的 child 字段，用于方法委托。
 	msg.BaseMessage.child = msg
 	return msg
 }
