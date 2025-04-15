@@ -1,5 +1,65 @@
 basePath: /api/v1
 definitions:
+  github_com_qianmianyao_parchment-server_internal_models_dot.Address:
+    properties:
+      deviceId:
+        type: integer
+      uuid:
+        type: string
+    type: object
+  github_com_qianmianyao_parchment-server_internal_models_dot.CreateRoomData:
+    properties:
+      password:
+        type: string
+      room_name:
+        type: string
+      user_uuid:
+        type: string
+    required:
+    - room_name
+    - user_uuid
+    type: object
+  github_com_qianmianyao_parchment-server_internal_models_dot.JoinRoomData:
+    properties:
+      password:
+        type: string
+      room_uuid:
+        type: string
+      user_uuid:
+        type: string
+    required:
+    - room_uuid
+    - user_uuid
+    type: object
+  github_com_qianmianyao_parchment-server_internal_models_dot.PreKey:
+    properties:
+      id:
+        type: integer
+      publicKey:
+        type: string
+    type: object
+  github_com_qianmianyao_parchment-server_internal_models_dot.SignalData:
+    properties:
+      address:
+        $ref: '#/definitions/github_com_qianmianyao_parchment-server_internal_models_dot.Address'
+      identityKey:
+        type: string
+      preKey:
+        $ref: '#/definitions/github_com_qianmianyao_parchment-server_internal_models_dot.PreKey'
+      registrationId:
+        type: integer
+      signedPreKey:
+        $ref: '#/definitions/github_com_qianmianyao_parchment-server_internal_models_dot.SignedPreKey'
+    type: object
+  github_com_qianmianyao_parchment-server_internal_models_dot.SignedPreKey:
+    properties:
+      id:
+        type: integer
+      publicKey:
+        type: string
+      signature:
+        type: string
+    type: object
   github_com_qianmianyao_parchment-server_pkg_utils.Response:
     properties:
       data:
@@ -29,49 +89,43 @@ info:
   title: Parchment API
   version: "1.0"
 paths:
-  /chat/check_room_password:
-    get:
+  /chat/check-password:
+    post:
       consumes:
       - application/json
-      description: 检查房间是否需要密码
+      description: 根据房间UUID检查该房间是否存在以及是否需要密码才能加入。
       parameters:
-      - description: 房间ID
-        in: query
-        name: room_uuid
+      - description: 包含房间UUID的数据
+        in: body
+        name: room
         required: true
-        type: string
-      - description: 用户ID
-        in: query
-        name: user_uuid
-        required: true
-        type: string
+        schema:
+          $ref: '#/definitions/github_com_qianmianyao_parchment-server_internal_models_dot.JoinRoomData'
       produces:
       - application/json
       responses:
         "200":
-          description: 返回结果
+          description: 房间存在且不需要密码
           schema:
-            allOf:
-            - $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-      summary: 检查房间是否需要密码
+            $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
+        "400":
+          description: 请求参数错误或房间不存在
+          schema:
+            $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
+        "401":
+          description: 需要密码
+          schema:
+            $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
+      summary: 检查房间密码要求
       tags:
       - Chat
   /chat/connect:
     get:
       consumes:
       - application/json
-      description: 建立WebSocket连接
+      description: 建立WebSocket连接，升级HTTP连接为WebSocket。
       parameters:
-      - description: 用户ID
-        in: query
-        name: uuid
-        required: true
-        type: string
-      - description: 用户名
+      - description: 用户名 (可选)
         in: query
         name: username
         type: string
@@ -79,12 +133,146 @@ paths:
       - application/json
       responses:
         "101":
-          description: Switching Protocols to websocket
+          description: Switching Protocols" "成功切换协议到WebSocket
           schema:
             type: string
       summary: WebSocket连接
       tags:
       - Chat
+  /chat/create-room:
+    post:
+      consumes:
+      - application/json
+      description: 创建一个新的聊天房间，可以设置房间名和可选的密码。
+      parameters:
+      - description: 创建房间所需的数据 (房间名, 用户UUID, 可选密码)
+        in: body
+        name: room
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qianmianyao_parchment-server_internal_models_dot.CreateRoomData'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功创建房间，返回房间UUID
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
+        "500":
+          description: 服务器内部错误 (创建房间或添加成员失败)
+          schema:
+            $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
+      summary: 创建聊天房间
+      tags:
+      - Chat
+  /chat/get-signal-key/{cuid}:
+    get:
+      consumes:
+      - application/json
+      description: 根据用户的聊天ID (cuid) 查询并返回其 Signal 协议密钥束，并将使用的一次性密钥标记为已用。
+      parameters:
+      - description: 用户的聊天ID
+        in: path
+        name: cuid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功获取密钥束
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qianmianyao_parchment-server_internal_models_dot.SignalData'
+              type: object
+        "400":
+          description: 无效的用户ID格式
+          schema:
+            $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
+        "500":
+          description: 服务器内部错误 (查询或更新密钥失败)
+          schema:
+            $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
+      summary: 获取Signal密钥
+      tags:
+      - Signal
+  /chat/join-room:
+    post:
+      consumes:
+      - application/json
+      description: 用户根据房间UUID和可选的密码加入一个已存在的聊天房间。
+      parameters:
+      - description: 加入房间所需的数据 (房间UUID, 用户UUID, 可选密码)
+        in: body
+        name: join
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qianmianyao_parchment-server_internal_models_dot.JoinRoomData'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功加入房间
+          schema:
+            $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
+        "401":
+          description: 密码错误
+          schema:
+            $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
+        "500":
+          description: 服务器内部错误 (添加成员失败)
+          schema:
+            $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
+      summary: 加入聊天房间
+      tags:
+      - Chat
+  /chat/save-signal-key:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 包含用户地址和密钥束的数据
+        in: body
+        name: keys
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qianmianyao_parchment-server_internal_models_dot.SignalData'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功保存密钥
+          schema:
+            $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
+        "500":
+          description: 服务器内部错误 (保存密钥失败)
+          schema:
+            $ref: '#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response'
+      summary: 保存Signal密钥
+      tags:
+      - Signal
   /example/hello_world:
     get:
       consumes:

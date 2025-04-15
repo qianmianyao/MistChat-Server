@@ -7,16 +7,25 @@ import (
 	"github.com/qianmianyao/parchment-server/pkg/global"
 )
 
+// Hub 负责管理 WebSocket 客户端连接、注册、注销以及消息广播。
 type Hub struct {
-	clients    map[*Client]bool
-	broadcast  chan []byte
-	register   chan *Client
+	// clients 存储所有已连接的客户端。
+	clients map[*Client]bool
+	// broadcast 通道用于接收需要广播给所有客户端的消息。
+	broadcast chan []byte
+	// register 通道用于接收新客户端的注册请求。
+	register chan *Client
+	// unregister 通道用于接收客户端的注销请求。
 	unregister chan *Client
+	// chatCreate 用于处理聊天相关的创建操作。
 	chatCreate *chat.Create
+	// chatUpdate 用于处理聊天相关的更新操作。
 	chatUpdate *chat.Update
-	chatFind   *chat.Find
+	// chatFind 用于处理聊天相关的查找操作。
+	chatFind *chat.Find
 }
 
+// NewHub 创建并返回一个新的 Hub 实例。
 func NewHub() *Hub {
 	return &Hub{
 		broadcast:  make(chan []byte),
@@ -31,7 +40,7 @@ func NewHub() *Hub {
 
 var usersClients = make(map[string]*Client)
 
-// Run starts the hub's main loop
+// Run 启动 Hub 的主事件循环，监听并处理客户端注册、注销和消息广播事件。
 func (h *Hub) Run() {
 	for {
 		select {
@@ -80,7 +89,7 @@ func (h *Hub) clientUnregister(client *Client) {
 	}
 }
 
-// Broadcast sends a message_type to all connected clients
+// Broadcast 将消息发送给所有连接的客户端。
 func (h *Hub) Broadcast(message []byte) {
 	for client := range h.clients {
 		select {
@@ -93,7 +102,10 @@ func (h *Hub) Broadcast(message []byte) {
 	}
 }
 
-// SendToSpecificClient 发送消息给指定客户端
+// SendToSpecificClient 将消息发送给指定房间内除发送者外的所有其他客户端。
+// uuid: 发送者客户端的UUID。
+// roomUUID: 目标房间的UUID。
+// message: 要发送的消息内容。
 func (h *Hub) SendToSpecificClient(uuid, roomUUID string, message []byte) {
 	// 获取房间内所有的用户
 	users := h.chatFind.AllUsersInTheRoom(roomUUID)

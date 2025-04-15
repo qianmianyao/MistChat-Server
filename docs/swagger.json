@@ -9,9 +9,9 @@
     "host": "localhost:8080",
     "basePath": "/api/v1",
     "paths": {
-        "/chat/check_room_password": {
-            "get": {
-                "description": "检查房间是否需要密码",
+        "/chat/check-password": {
+            "post": {
+                "description": "根据房间UUID检查该房间是否存在以及是否需要密码才能加入。",
                 "consumes": [
                     "application/json"
                 ],
@@ -21,40 +21,35 @@
                 "tags": [
                     "Chat"
                 ],
-                "summary": "检查房间是否需要密码",
+                "summary": "检查房间密码要求",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "房间ID",
-                        "name": "room_uuid",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "用户ID",
-                        "name": "user_uuid",
-                        "in": "query",
-                        "required": true
+                        "description": "包含房间UUID的数据",
+                        "name": "room",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_internal_models_dot.JoinRoomData"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "返回结果",
+                        "description": "房间存在且不需要密码",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误或房间不存在",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "需要密码",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
                         }
                     }
                 }
@@ -62,7 +57,7 @@
         },
         "/chat/connect": {
             "get": {
-                "description": "建立WebSocket连接",
+                "description": "建立WebSocket连接，升级HTTP连接为WebSocket。",
                 "consumes": [
                     "application/json"
                 ],
@@ -76,23 +71,230 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "用户ID",
-                        "name": "uuid",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "用户名",
+                        "description": "用户名 (可选)",
                         "name": "username",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "101": {
-                        "description": "Switching Protocols to websocket",
+                        "description": "Switching Protocols\" \"成功切换协议到WebSocket",
                         "schema": {
                             "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/create-room": {
+            "post": {
+                "description": "创建一个新的聊天房间，可以设置房间名和可选的密码。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "创建聊天房间",
+                "parameters": [
+                    {
+                        "description": "创建房间所需的数据 (房间名, 用户UUID, 可选密码)",
+                        "name": "room",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_internal_models_dot.CreateRoomData"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功创建房间，返回房间UUID",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误 (创建房间或添加成员失败)",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/get-signal-key/{cuid}": {
+            "get": {
+                "description": "根据用户的聊天ID (cuid) 查询并返回其 Signal 协议密钥束，并将使用的一次性密钥标记为已用。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "获取Signal密钥",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户的聊天ID",
+                        "name": "cuid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功获取密钥束",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_internal_models_dot.SignalData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "无效的用户ID格式",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误 (查询或更新密钥失败)",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/join-room": {
+            "post": {
+                "description": "用户根据房间UUID和可选的密码加入一个已存在的聊天房间。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "加入聊天房间",
+                "parameters": [
+                    {
+                        "description": "加入房间所需的数据 (房间UUID, 用户UUID, 可选密码)",
+                        "name": "join",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_internal_models_dot.JoinRoomData"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功加入房间",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "密码错误",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误 (添加成员失败)",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/save-signal-key": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Signal"
+                ],
+                "summary": "保存Signal密钥",
+                "parameters": [
+                    {
+                        "description": "包含用户地址和密钥束的数据",
+                        "name": "keys",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_internal_models_dot.SignalData"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功保存密钥",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误 (保存密钥失败)",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qianmianyao_parchment-server_pkg_utils.Response"
                         }
                     }
                 }
@@ -123,6 +325,98 @@
         }
     },
     "definitions": {
+        "github_com_qianmianyao_parchment-server_internal_models_dot.Address": {
+            "type": "object",
+            "properties": {
+                "deviceId": {
+                    "type": "integer"
+                },
+                "uuid": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_qianmianyao_parchment-server_internal_models_dot.CreateRoomData": {
+            "type": "object",
+            "required": [
+                "room_name",
+                "user_uuid"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "room_name": {
+                    "type": "string"
+                },
+                "user_uuid": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_qianmianyao_parchment-server_internal_models_dot.JoinRoomData": {
+            "type": "object",
+            "required": [
+                "room_uuid",
+                "user_uuid"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "room_uuid": {
+                    "type": "string"
+                },
+                "user_uuid": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_qianmianyao_parchment-server_internal_models_dot.PreKey": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "publicKey": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_qianmianyao_parchment-server_internal_models_dot.SignalData": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "$ref": "#/definitions/github_com_qianmianyao_parchment-server_internal_models_dot.Address"
+                },
+                "identityKey": {
+                    "type": "string"
+                },
+                "preKey": {
+                    "$ref": "#/definitions/github_com_qianmianyao_parchment-server_internal_models_dot.PreKey"
+                },
+                "registrationId": {
+                    "type": "integer"
+                },
+                "signedPreKey": {
+                    "$ref": "#/definitions/github_com_qianmianyao_parchment-server_internal_models_dot.SignedPreKey"
+                }
+            }
+        },
+        "github_com_qianmianyao_parchment-server_internal_models_dot.SignedPreKey": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "publicKey": {
+                    "type": "string"
+                },
+                "signature": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_qianmianyao_parchment-server_pkg_utils.Response": {
             "type": "object",
             "properties": {

@@ -7,30 +7,27 @@ import (
 	"github.com/qianmianyao/parchment-server/internal/models/dot"
 )
 
-// MessageParser 用于处理消息解析
+// MessageParser 提供了用于解析和处理 WebSocket 消息的工具函数。
 type MessageParser struct{}
 
-// ParseMessage 解析原始JSON消息，返回对应类型的消息对象和解析出的Envelope
+// ParseMessage 将原始的 JSON 格式数据解析为具体的 Message 对象和通用的 Envelope 结构。
 func ParseMessage(data []byte) (Message, dot.Envelope, error) {
-	// 先将数据解析为通用的Envelope结构
 	var envelope dot.Envelope
 	if err := json.Unmarshal(data, &envelope); err != nil {
 		return nil, envelope, errors.New("无法解析消息信封: " + err.Error())
 	}
 
-	// 根据消息类型创建相应的消息对象
 	var msg Message
 	switch envelope.Message.Type {
 	case dot.SystemMessage:
 		msg = NewSystemMessage("")
 	case dot.TextMessage:
 		msg = NewTextMessage("")
-	// 在这里添加其他消息类型的处理
+	// TODO: 在这里添加其他消息类型的处理
 	default:
 		return nil, envelope, errors.New("未知的消息类型: " + string(envelope.Message.Type))
 	}
 
-	// 加载消息内容
 	if err := msg.LoadFromEnvelope(envelope); err != nil {
 		return nil, envelope, errors.New("加载消息内容失败: " + err.Error())
 	}
@@ -38,7 +35,7 @@ func ParseMessage(data []byte) (Message, dot.Envelope, error) {
 	return msg, envelope, nil
 }
 
-// ParseMessageType 仅解析消息类型，不创建完整的消息对象
+// ParseMessageType 从原始的 JSON 格式数据中仅解析出消息类型。
 func ParseMessageType(data []byte) (dot.MessageType, error) {
 	// 创建一个临时结构体只包含必要的字段，提高解析效率
 	type EnvelopeType struct {
@@ -55,20 +52,20 @@ func ParseMessageType(data []byte) (dot.MessageType, error) {
 	return envType.Message.Type, nil
 }
 
-// CreateMessage 根据消息类型创建空消息对象
+// CreateMessage 根据给定的消息类型创建对应类型的空 Message 对象实例。
 func CreateMessage(msgType dot.MessageType) (Message, error) {
 	switch msgType {
 	case dot.SystemMessage:
 		return NewSystemMessage(""), nil
 	case dot.TextMessage:
 		return NewTextMessage(""), nil
-	// 在这里添加其他消息类型的处理
+	// TODO: 在这里添加其他消息类型的处理
 	default:
 		return nil, errors.New("不支持的消息类型: " + string(msgType))
 	}
 }
 
-// ParseMessageContent 解析消息内容到已存在的消息对象
+// ParseMessageContent 将原始的 JSON 格式数据反序列化到已存在的 Message 对象中。
 func ParseMessageContent(data []byte, msg Message) (dot.Envelope, error) {
 	env, err := msg.Deserialize(data)
 	if err != nil {
