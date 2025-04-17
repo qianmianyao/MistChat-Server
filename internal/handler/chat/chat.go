@@ -1,6 +1,8 @@
 package chat
 
 import (
+	"fmt"
+	"github.com/qianmianyao/parchment-server/pkg/global"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -41,6 +43,34 @@ func (w *WebSockerRouter) WsHandler(hub *websocket.Hub) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		websocket.ServeWs(hub, c.Writer, c.Request)
 	}
+}
+
+// Register 处理用户注册请求。
+func (w *WebSockerRouter) Register(c *gin.Context) {
+	var data dot.RegisterData
+	if err := c.ShouldBindJSON(&data); err != nil {
+		utils.ErrorWithDefault(c)
+		return
+	}
+	// 生成 uuid
+	uuid, err := encryption.GenerateUID("u_")
+	if err != nil {
+		global.Logger.Error(fmt.Sprintf("Failed to generate UID: %v", err))
+		utils.ErrorWithDefault(c)
+		return
+	}
+	// 验证 uuid 格式。
+	if ok, err := encryption.ValidateUID(uuid, "u_"); err != nil || !ok {
+		global.Logger.Warn(fmt.Sprintf("Invalid UID provided or generated: %s, validation error: %v", uuid, err))
+		utils.ErrorWithDefault(c)
+		return
+	}
+	// 创建用户
+	if err := w.chatCreate.User(data.Username, uuid); err != nil {
+		utils.ErrorWithDefault(c)
+		return
+	}
+	utils.Success(c, dot.RegisterResponse{Username: data.Username, UUID: uuid}, "注册成功")
 }
 
 // CheckRoomPasswordRequired 检查加入房间是否需要密码。

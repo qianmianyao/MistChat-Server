@@ -63,9 +63,7 @@ func (h *Hub) clientRegister(client *Client) {
 			return
 		}
 	case chat.UserNotExist:
-		if err := h.chatCreate.User(client.username, client.uuid); err != nil {
-			return
-		}
+		return
 	}
 	h.clients[client] = true
 	usersClients[client.uuid] = client
@@ -81,11 +79,9 @@ func (h *Hub) clientUnregister(client *Client) {
 				return
 			}
 		}
-		global.Logger.Debug(fmt.Sprintf("client %v disconnected", client))
 		// 从在线用户列表中删除
 		delete(usersClients, client.uuid)
 		delete(h.clients, client)
-		close(client.send)
 	}
 }
 

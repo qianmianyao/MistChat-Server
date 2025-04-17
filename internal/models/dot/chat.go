@@ -35,3 +35,12 @@ type CreateRoomData struct {
 	RoomName string `json:"room_name" binding:"required"`
 	Password string `json:"password"`
 }
+
+type RegisterData struct {
+	Username string `json:"username" binding:"required"`
+}
+
+type RegisterResponse struct {
+	Username string `json:"username"`
+	UUID     string `json:"uuid"`
+}

@@ -81,7 +81,7 @@ func (c *Client) readPump() {
 		// 清理消息：移除首尾空格，换行符替换为空格。
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 
-		// global.Logger.Debug(fmt.Sprintf("Received message from %s: %s", c.uuid, string(message))) // 可选调试日志
+		global.Logger.Debug(fmt.Sprintf("Received message from %s: %s", c.uuid, string(message))) // 可选调试日志
 
 		// 解析消息。
 		_, envelope, err := message_type.ParseMessage(message)
@@ -112,6 +112,7 @@ func (c *Client) writePump() {
 		if err != nil {
 			global.Logger.Error(fmt.Sprintf("Error closing connection for %s: %v", c.uuid, err))
 		}
+		global.Logger.Warn(fmt.Sprintf("Closing connection for %s", c.uuid))
 	}()
 	for {
 		select {
@@ -186,21 +187,16 @@ func (c *Client) writePump() {
 // 负责升级连接、创建 Client、注册到 Hub 并启动读写 goroutine。
 func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("username")
-	uid := r.URL.Query().Get("uid")
+	uuid := r.URL.Query().Get("uuid")
 
-	// 如果请求中没有 UID，则生成一个新的。
-	if uid == "" {
-		var err error
-		uid, err = encryption.GenerateUID("u_")
-		if err != nil {
-			global.Logger.Error(fmt.Sprintf("Failed to generate UID: %v", err))
-			http.Error(w, "Failed to generate user ID", http.StatusInternalServerError)
-			return
-		}
+	if (username == "") || (uuid == "") {
+		http.Error(w, "Missing required query parameters.", http.StatusBadRequest)
+		return
 	}
+
 	// 验证 UID 格式。
-	if ok, err := encryption.ValidateUID(uid, "u_"); err != nil || !ok {
-		global.Logger.Warn(fmt.Sprintf("Invalid UID provided or generated: %s, validation error: %v", uid, err))
+	if ok, err := encryption.ValidateUID(uuid, "u_"); err != nil || !ok {
+		global.Logger.Warn(fmt.Sprintf("Invalid UID provided or generated: %s, validation error: %v", uuid, err))
 		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
 		return
 	}
@@ -208,18 +204,17 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	// 升级 HTTP 连接到 WebSocket。
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("Failed to upgrade connection for potential user %s: %v", uid, err) // Upgrade 会处理 HTTP 响应
+		log.Printf("Failed to upgrade connection for potential user %s: %v", uuid, err) // Upgrade 会处理 HTTP 响应
 		return
 	}
 
 	// 创建 Client 实例，缓冲区大小为 256。
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), uuid: uid, username: username}
+	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), uuid: uuid, username: username}
 	// 注册客户端到 Hub。
 	client.hub.register <- client
 
 	// 创建并发送欢迎消息。
-	welcomePayload := map[string]string{"username": username, "uid": uid}
-	welcomeMessage, err := message_type.NewSystemMessage(welcomePayload).SerializeWithArgs()
+	welcomeMessage, err := message_type.NewSystemMessage("connect success!").SerializeWithArgs()
 	if err != nil {
 		global.Logger.Error(fmt.Sprintf("Failed to serialize welcome message for %s: %v", client.uuid, err))
 	} else {
