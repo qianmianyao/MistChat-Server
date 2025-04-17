@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/qianmianyao/parchment-server/internal/services/chat"
 	"github.com/qianmianyao/parchment-server/pkg/global"
@@ -23,22 +24,36 @@ type Hub struct {
 	chatUpdate *chat.Update
 	// chatFind 用于处理聊天相关的查找操作。
 	chatFind *chat.Find
+	// clientsMutex 用于保护 clients 和 usersClients 的互斥锁
+	clientsMutex sync.RWMutex
 }
 
 // NewHub 创建并返回一个新的 Hub 实例。
 func NewHub() *Hub {
 	return &Hub{
-		broadcast:  make(chan []byte),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
-		clients:    make(map[*Client]bool),
-		chatCreate: chat.NewCreate(),
-		chatUpdate: chat.NewUpdate(),
-		chatFind:   chat.NewFind(),
+		broadcast:    make(chan []byte),
+		register:     make(chan *Client),
+		unregister:   make(chan *Client),
+		clients:      make(map[*Client]bool),
+		chatCreate:   chat.NewCreate(),
+		chatUpdate:   chat.NewUpdate(),
+		chatFind:     chat.NewFind(),
+		clientsMutex: sync.RWMutex{},
 	}
 }
 
-var usersClients = make(map[string]*Client)
+var (
+	usersClients   = make(map[string]*Client)
+	usersClientsMu sync.RWMutex
+)
+
+// GetClientByUUID 根据UUID获取客户端连接
+func (h *Hub) GetClientByUUID(uuid string) (*Client, bool) {
+	usersClientsMu.RLock()
+	defer usersClientsMu.RUnlock()
+	client, exists := usersClients[uuid]
+	return client, exists
+}
 
 // Run 启动 Hub 的主事件循环，监听并处理客户端注册、注销和消息广播事件。
 func (h *Hub) Run() {
@@ -65,35 +80,63 @@ func (h *Hub) clientRegister(client *Client) {
 	case chat.UserNotExist:
 		return
 	}
+
+	h.clientsMutex.Lock()
+	defer h.clientsMutex.Unlock()
+
+	// 如果该用户已有连接，先关闭旧连接
+	if oldClient, exists := usersClients[client.uuid]; exists && oldClient != client {
+		global.Logger.Warn(fmt.Sprintf("User %s already has an active connection in map, closing", client.uuid))
+		delete(h.clients, oldClient)
+		close(oldClient.send)
+	}
+
 	h.clients[client] = true
+
+	usersClientsMu.Lock()
 	usersClients[client.uuid] = client
+	usersClientsMu.Unlock()
+
 	global.Logger.Debug(fmt.Sprintf("client %v connected", client))
 }
 
 // clientUnregister unregisters a client
 func (h *Hub) clientUnregister(client *Client) {
-	if _, ok := h.clients[client]; ok {
+	h.clientsMutex.Lock()
+	defer h.clientsMutex.Unlock()
 
+	if _, ok := h.clients[client]; ok {
 		if r := h.chatFind.IsUserExist(client.uuid); r == chat.UserExist {
 			if err := h.chatUpdate.UserOnlineStatus(client.uuid, false); err != nil {
 				return
 			}
 		}
+
 		// 从在线用户列表中删除
-		delete(usersClients, client.uuid)
+		usersClientsMu.Lock()
+		if currentClient, exists := usersClients[client.uuid]; exists && currentClient == client {
+			delete(usersClients, client.uuid)
+		}
+		usersClientsMu.Unlock()
+
 		delete(h.clients, client)
+		close(client.send) // 确保发送通道被关闭
 	}
 }
 
 // Broadcast 将消息发送给所有连接的客户端。
 func (h *Hub) Broadcast(message []byte) {
+	h.clientsMutex.RLock()
+	defer h.clientsMutex.RUnlock()
+
 	for client := range h.clients {
 		select {
 		case client.send <- message:
 			global.Logger.Debug(fmt.Sprintf("send to client: %v", client))
 		default:
-			close(client.send)
-			delete(h.clients, client)
+			go func(c *Client) {
+				h.unregister <- c
+			}(client)
 		}
 	}
 }
@@ -114,6 +157,8 @@ func (h *Hub) SendToSpecificClient(uuid, roomUUID string, message []byte) {
 
 	// 获取房间内所有的在线用户
 	var clients []*Client
+
+	usersClientsMu.RLock()
 	for _, uid := range users {
 		if client, ok := usersClients[uid]; ok {
 			// 不对自己发送消息
@@ -123,13 +168,16 @@ func (h *Hub) SendToSpecificClient(uuid, roomUUID string, message []byte) {
 			clients = append(clients, client)
 		}
 	}
+	usersClientsMu.RUnlock()
+
 	for _, client := range clients {
 		select {
 		case client.send <- message:
 			global.Logger.Debug(fmt.Sprintf("send to specific client: %v", client))
 		default:
-			close(client.send)
-			delete(h.clients, client)
+			go func(c *Client) {
+				h.unregister <- c
+			}(client)
 		}
 	}
 }

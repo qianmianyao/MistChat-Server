@@ -9,7 +9,7 @@ type ChatUser struct {
 	gorm.Model
 	UUID     string `gorm:"uniqueIndex;not null"`
 	Username string `gorm:"not null"`
-	IsOnline bool   `gorm:"not null;default:true"`
+	IsOnline bool   `gorm:"not null;default:false"`
 }
 
 type Room struct {

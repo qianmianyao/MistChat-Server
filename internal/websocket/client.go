@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -51,6 +52,28 @@ type Client struct {
 	send     chan []byte     // 发送消息的缓冲通道。
 	uuid     string          // 客户端唯一标识符 (User ID)。
 	username string          // 客户端用户名。
+	isClosed bool            // 连接是否已关闭。
+	closeMu  sync.Mutex      // 用于保护 isClosed 状态的互斥锁。
+}
+
+// closeConnection 安全地关闭客户端连接，确保只关闭一次。
+func (c *Client) closeConnection() bool {
+	c.closeMu.Lock()
+	defer c.closeMu.Unlock()
+
+	if c.isClosed {
+		return false // 连接已经关闭，不需要再次关闭
+	}
+
+	err := c.conn.Close()
+	if err != nil {
+		global.Logger.Warn(fmt.Sprintf("Error while closing connection for %s: %v", c.uuid, err))
+	} else {
+		global.Logger.Info(fmt.Sprintf("Connection closed for %s", c.uuid))
+	}
+
+	c.isClosed = true
+	return true
 }
 
 // readPump 从 WebSocket 连接读取消息并传递给 Hub 处理。
@@ -59,16 +82,21 @@ func (c *Client) readPump() {
 	// 确保在退出时注销客户端并关闭连接。
 	defer func() {
 		c.hub.unregister <- c
-		err := c.conn.Close()
-		if err != nil {
-			global.Logger.Error(fmt.Sprintf("Error closing connection for %s: %v", c.uuid, err))
-		}
+		c.closeConnection() // 使用安全的关闭方法
 	}()
 
 	c.conn.SetReadLimit(maxMessageSize)
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	// 设置 Pong 消息处理器，收到 Pong 时更新读取截止时间。
-	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	c.conn.SetPongHandler(func(string) error {
+		err := c.conn.SetReadDeadline(time.Now().Add(pongWait))
+		if err != nil {
+			global.Logger.Warn(fmt.Sprintf("Failed to set read deadline in pong handler for %s: %v", c.uuid, err))
+		} else {
+			global.Logger.Debug(fmt.Sprintf("Received pong from %s, reset deadline", c.uuid))
+		}
+		return nil
+	})
 
 	for {
 		_, message, err := c.conn.ReadMessage()
@@ -96,7 +124,7 @@ func (c *Client) readPump() {
 			c.hub.SendToSpecificClient(envelope.Source.Uid, envelope.Destination, message)
 		} else {
 			// 广播消息（当前注释掉）。
-			// c.hub.broadcast <- message
+			c.hub.broadcast <- message
 		}
 	}
 }
@@ -108,11 +136,9 @@ func (c *Client) writePump() {
 	// 确保在退出时停止定时器并关闭连接。
 	defer func() {
 		ticker.Stop()
-		err := c.conn.Close()
-		if err != nil {
-			global.Logger.Error(fmt.Sprintf("Error closing connection for %s: %v", c.uuid, err))
+		if c.closeConnection() { // 使用安全的关闭方法
+			global.Logger.Warn(fmt.Sprintf("Closing connection for %s", c.uuid))
 		}
-		global.Logger.Warn(fmt.Sprintf("Closing connection for %s", c.uuid))
 	}()
 	for {
 		select {
@@ -170,6 +196,7 @@ func (c *Client) writePump() {
 
 		case <-ticker.C:
 			// 定时器触发，发送 Ping 消息。
+			global.Logger.Debug(fmt.Sprintf("Sending ping to client %s", c.uuid))
 			err := c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err != nil {
 				global.Logger.Warn(fmt.Sprintf("Failed to set write deadline for ping for %s: %v", c.uuid, err))
@@ -201,6 +228,16 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 检查用户是否已经有活跃连接
+	if existingClient, exists := hub.GetClientByUUID(uuid); exists {
+		global.Logger.Warn(fmt.Sprintf("User %s already has an active connection, closing old connection", uuid))
+		// 关闭旧连接
+		if existingClient.closeConnection() {
+			// 取消注册旧客户端
+			hub.unregister <- existingClient
+		}
+	}
+
 	// 升级 HTTP 连接到 WebSocket。
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -208,8 +245,28 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 启用WebSocket连接的支持
+	conn.SetReadLimit(maxMessageSize)
+	// 初始设置读取截止时间
+	err = conn.SetReadDeadline(time.Now().Add(pongWait))
+	if err != nil {
+		global.Logger.Error(fmt.Sprintf("Failed to set initial read deadline for %s: %v", uuid, err))
+		if err := conn.Close(); err != nil {
+			return
+		}
+		return
+	}
+
 	// 创建 Client 实例，缓冲区大小为 256。
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), uuid: uuid, username: username}
+	client := &Client{
+		hub:      hub,
+		conn:     conn,
+		send:     make(chan []byte, 256),
+		uuid:     uuid,
+		username: username,
+		isClosed: false,
+	}
+
 	// 注册客户端到 Hub。
 	client.hub.register <- client
 
@@ -220,6 +277,8 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	} else {
 		client.send <- welcomeMessage // 将欢迎消息放入发送通道
 	}
+
+	global.Logger.Info(fmt.Sprintf("New WebSocket connection established for user %s (%s)", client.username, client.uuid))
 
 	// 启动后台 goroutine 处理读写。
 	go client.writePump()

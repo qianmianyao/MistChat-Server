@@ -22,6 +22,7 @@ func (c *Create) User(username, uuid string) error {
 	user := &entity.ChatUser{
 		Username: username,
 		UUID:     uuid,
+		IsOnline: false,
 	}
 	if err := c.db.Create(user).Error; err != nil {
 		global.Logger.Error("创建用户失败: ", zap.Error(err))
