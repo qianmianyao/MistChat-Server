@@ -2,9 +2,9 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/qianmianyao/parchment-server/internal/handler/chat"
-	"github.com/qianmianyao/parchment-server/internal/handler/hello"
-	"github.com/qianmianyao/parchment-server/internal/websocket"
+	"qianmianyao/MistChat-Server/internal/handler/chat"
+	"qianmianyao/MistChat-Server/internal/handler/hello"
+	"qianmianyao/MistChat-Server/internal/websocket"
 )
 
 // SetupRouter 设置路由组

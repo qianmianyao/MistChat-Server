@@ -1,11 +1,11 @@
 package chat
 
 import (
-	"github.com/qianmianyao/parchment-server/pkg/config"
-	"github.com/qianmianyao/parchment-server/pkg/database"
-	"github.com/qianmianyao/parchment-server/pkg/global"
-	"github.com/qianmianyao/parchment-server/pkg/logger"
 	"gorm.io/gorm"
+	"qianmianyao/MistChat-Server/pkg/config"
+	"qianmianyao/MistChat-Server/pkg/database"
+	"qianmianyao/MistChat-Server/pkg/global"
+	"qianmianyao/MistChat-Server/pkg/logger"
 	"testing"
 )
 

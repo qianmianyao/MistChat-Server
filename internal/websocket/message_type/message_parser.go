@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/qianmianyao/parchment-server/internal/models/dot"
+	"qianmianyao/MistChat-Server/internal/models/dot"
 )
 
 // MessageParser 提供了用于解析和处理 WebSocket 消息的工具函数。

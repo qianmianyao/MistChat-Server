@@ -2,16 +2,16 @@ package chat
 
 import (
 	"fmt"
-	"github.com/qianmianyao/parchment-server/pkg/global"
+	"qianmianyao/MistChat-Server/pkg/global"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/qianmianyao/parchment-server/internal/models/dot"
-	"github.com/qianmianyao/parchment-server/internal/models/entity"
-	"github.com/qianmianyao/parchment-server/internal/services/chat"
-	"github.com/qianmianyao/parchment-server/internal/websocket"
-	"github.com/qianmianyao/parchment-server/pkg/encryption"
-	"github.com/qianmianyao/parchment-server/pkg/utils"
+	"qianmianyao/MistChat-Server/internal/models/dot"
+	"qianmianyao/MistChat-Server/internal/models/entity"
+	"qianmianyao/MistChat-Server/internal/services/chat"
+	"qianmianyao/MistChat-Server/internal/websocket"
+	"qianmianyao/MistChat-Server/pkg/encryption"
+	"qianmianyao/MistChat-Server/pkg/utils"
 )
 
 // WebSockerRouter 定义了处理聊天相关 WebSocket 请求的路由结构。

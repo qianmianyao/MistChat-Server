@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/qianmianyao/parchment-server/pkg/config"
-	"github.com/qianmianyao/parchment-server/pkg/global"
+	"qianmianyao/MistChat-Server/pkg/config"
+	"qianmianyao/MistChat-Server/pkg/global"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"

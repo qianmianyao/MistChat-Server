@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/qianmianyao/parchment-server/internal/models/dot"
+	"qianmianyao/MistChat-Server/internal/models/dot"
 )
 
 // Message 是所有 WebSocket 消息类型的通用接口。

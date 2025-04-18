@@ -2,12 +2,12 @@ package database
 
 import (
 	"fmt"
-	"github.com/qianmianyao/parchment-server/internal/models/entity"
 	"log"
+	"qianmianyao/MistChat-Server/internal/models/entity"
 	"sync"
 
-	"github.com/qianmianyao/parchment-server/pkg/config"
-	"github.com/qianmianyao/parchment-server/pkg/global"
+	"qianmianyao/MistChat-Server/pkg/config"
+	"qianmianyao/MistChat-Server/pkg/global"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

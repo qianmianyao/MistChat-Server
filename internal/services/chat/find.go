@@ -1,9 +1,9 @@
 package chat
 
 import (
-	"github.com/qianmianyao/parchment-server/internal/models/entity"
-	"github.com/qianmianyao/parchment-server/pkg/global"
 	"gorm.io/gorm"
+	"qianmianyao/MistChat-Server/internal/models/entity"
+	"qianmianyao/MistChat-Server/pkg/global"
 )
 
 type Status string

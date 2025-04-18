@@ -3,7 +3,7 @@ package message_type
 import (
 	"time"
 
-	"github.com/qianmianyao/parchment-server/internal/models/dot"
+	"qianmianyao/MistChat-Server/internal/models/dot"
 )
 
 // SystemMessage 代表系统生成的消息。

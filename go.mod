@@ -1,4 +1,4 @@
-module github.com/qianmianyao/parchment-server
+module qianmianyao/MistChat-Server
 
 go 1.23.1
 

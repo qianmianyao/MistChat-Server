@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/qianmianyao/parchment-server/internal/websocket/message_type"
-	"github.com/qianmianyao/parchment-server/pkg/encryption"
-	"github.com/qianmianyao/parchment-server/pkg/global"
+	"qianmianyao/MistChat-Server/internal/websocket/message_type"
+	"qianmianyao/MistChat-Server/pkg/encryption"
+	"qianmianyao/MistChat-Server/pkg/global"
 )
 
 // WebSocket 连接相关的常量定义。

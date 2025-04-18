@@ -1,11 +1,11 @@
 package config
 
 import (
-	"github.com/qianmianyao/parchment-server/internal/models/config"
 	"path/filepath"
+	"qianmianyao/MistChat-Server/internal/models/config"
 	"sync"
 
-	"github.com/qianmianyao/parchment-server/pkg/global"
+	"qianmianyao/MistChat-Server/pkg/global"
 
 	"github.com/spf13/viper"
 )

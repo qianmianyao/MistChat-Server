@@ -2,17 +2,17 @@ package main
 
 import (
 	"fmt"
-	"github.com/qianmianyao/parchment-server/api/v1"
-	"github.com/qianmianyao/parchment-server/pkg/database"
+	"qianmianyao/MistChat-Server/api/v1"
+	"qianmianyao/MistChat-Server/pkg/database"
 
-	"github.com/qianmianyao/parchment-server/pkg/config"
-	"github.com/qianmianyao/parchment-server/pkg/global"
-	"github.com/qianmianyao/parchment-server/pkg/logger"
+	"qianmianyao/MistChat-Server/pkg/config"
+	"qianmianyao/MistChat-Server/pkg/global"
+	"qianmianyao/MistChat-Server/pkg/logger"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/qianmianyao/parchment-server/docs"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	_ "qianmianyao/MistChat-Server/docs"
 )
 
 // @title Parchment API

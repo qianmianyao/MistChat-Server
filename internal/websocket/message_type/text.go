@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/qianmianyao/parchment-server/internal/models/dot"
+	"qianmianyao/MistChat-Server/internal/models/dot"
 )
 
 // TextEnvelopeArgs 定义了构建文本消息 Envelope 所需的参数结构。

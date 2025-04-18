@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/qianmianyao/parchment-server/internal/services/chat"
-	"github.com/qianmianyao/parchment-server/pkg/global"
+	"qianmianyao/MistChat-Server/internal/services/chat"
+	"qianmianyao/MistChat-Server/pkg/global"
 )
 
 // Hub 负责管理 WebSocket 客户端连接、注册、注销以及消息广播。
