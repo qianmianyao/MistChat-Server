@@ -136,3 +136,16 @@ func (f *Find) SignalPreKey(uuid string) (entity.SignalPreKey, error) {
 	}
 	return signalPreKey, nil
 }
+
+// UsersRooms 获取用户所有的房间
+func (f *Find) UsersRooms(uuid string) ([]entity.Room, error) {
+	var rooms []entity.Room
+	err := f.db.Model(&entity.Room{}).Joins("JOIN room_members ON rooms.uuid = room_members.room_uuid").
+		Where("room_members.chat_user_uuid = ?", uuid).
+		Find(&rooms).Error
+	if err != nil {
+		global.Logger.Error("获取用户房间失败")
+		return rooms, err
+	}
+	return rooms, nil
+}

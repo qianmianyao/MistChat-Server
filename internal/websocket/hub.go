@@ -86,7 +86,7 @@ func (h *Hub) clientRegister(client *Client) {
 
 	// 如果该用户已有连接，先关闭旧连接
 	if oldClient, exists := usersClients[client.uuid]; exists && oldClient != client {
-		global.Logger.Warn(fmt.Sprintf("User %s already has an active connection in map, closing", client.uuid))
+		global.Logger.Warn(fmt.Sprintf("用户在 %s 中已有一个活动连接，正在关闭", client.uuid))
 		delete(h.clients, oldClient)
 		close(oldClient.send)
 	}
@@ -97,7 +97,7 @@ func (h *Hub) clientRegister(client *Client) {
 	usersClients[client.uuid] = client
 	usersClientsMu.Unlock()
 
-	global.Logger.Debug(fmt.Sprintf("client %v connected", client))
+	global.Logger.Debug(fmt.Sprintf("客户端 %v 已连接", client))
 }
 
 // clientUnregister unregisters a client
@@ -132,7 +132,7 @@ func (h *Hub) Broadcast(message []byte) {
 	for client := range h.clients {
 		select {
 		case client.send <- message:
-			global.Logger.Debug(fmt.Sprintf("send to client: %v", client))
+			global.Logger.Debug(fmt.Sprintf("发送给客户: %v", client))
 		default:
 			go func(c *Client) {
 				h.unregister <- c
@@ -173,7 +173,7 @@ func (h *Hub) SendToSpecificClient(uuid, roomUUID string, message []byte) {
 	for _, client := range clients {
 		select {
 		case client.send <- message:
-			global.Logger.Debug(fmt.Sprintf("send to specific client: %v", client))
+			global.Logger.Debug(fmt.Sprintf("发送给用户: %v", client))
 		default:
 			go func(c *Client) {
 				h.unregister <- c

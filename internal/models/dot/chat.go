@@ -44,3 +44,7 @@ type RegisterResponse struct {
 	Username string `json:"username"`
 	UUID     string `json:"uuid"`
 }
+
+type GetUsersRoomsParams struct {
+	UserUUID string `form:"user_uuid" binding:"required"`
+}

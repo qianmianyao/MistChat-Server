@@ -65,11 +65,8 @@ func (c *Client) closeConnection() bool {
 		return false // 连接已经关闭，不需要再次关闭
 	}
 
-	err := c.conn.Close()
-	if err != nil {
+	if err := c.conn.Close(); err != nil {
 		global.Logger.Warn(fmt.Sprintf("Error while closing connection for %s: %v", c.uuid, err))
-	} else {
-		global.Logger.Info(fmt.Sprintf("Connection closed for %s", c.uuid))
 	}
 
 	c.isClosed = true
@@ -89,11 +86,8 @@ func (c *Client) readPump() {
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	// 设置 Pong 消息处理器，收到 Pong 时更新读取截止时间。
 	c.conn.SetPongHandler(func(string) error {
-		err := c.conn.SetReadDeadline(time.Now().Add(pongWait))
-		if err != nil {
+		if err := c.conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
 			global.Logger.Warn(fmt.Sprintf("Failed to set read deadline in pong handler for %s: %v", c.uuid, err))
-		} else {
-			global.Logger.Debug(fmt.Sprintf("Received pong from %s, reset deadline", c.uuid))
 		}
 		return nil
 	})
@@ -153,14 +147,12 @@ func (c *Client) writePump() {
 			// 获取写入器，同一时间只允许一个写入器活跃。
 			w, err := c.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
-				global.Logger.Error(fmt.Sprintf("Failed to get next writer for %s: %v", c.uuid, err))
 				return
 			}
 
 			// 写入当前消息。
 			_, err = w.Write(message)
 			if err != nil {
-				global.Logger.Error(fmt.Sprintf("Failed to write message for %s: %v", c.uuid, err))
 				_ = w.Close() // 即使写入失败，也尝试关闭写入器
 				return
 			}
@@ -171,13 +163,11 @@ func (c *Client) writePump() {
 			for i := 0; i < n; i++ {
 				_, err = w.Write(newline) // 消息间添加换行符
 				if err != nil {
-					global.Logger.Error(fmt.Sprintf("Failed to write newline for %s: %v", c.uuid, err))
 					writeError = true
 					break
 				}
 				_, err = w.Write(<-c.send) // 写入下一条排队的消息
 				if err != nil {
-					global.Logger.Error(fmt.Sprintf("Failed to write queued message for %s: %v", c.uuid, err))
 					writeError = true
 					break
 				}
@@ -185,7 +175,6 @@ func (c *Client) writePump() {
 
 			// 关闭写入器，将所有数据刷新到底层连接。
 			if err := w.Close(); err != nil {
-				global.Logger.Error(fmt.Sprintf("Failed to close writer for %s: %v", c.uuid, err))
 				return // 关闭写入器失败，通常意味着连接已关闭
 			}
 
@@ -196,14 +185,11 @@ func (c *Client) writePump() {
 
 		case <-ticker.C:
 			// 定时器触发，发送 Ping 消息。
-			global.Logger.Debug(fmt.Sprintf("Sending ping to client %s", c.uuid))
 			err := c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err != nil {
-				global.Logger.Warn(fmt.Sprintf("Failed to set write deadline for ping for %s: %v", c.uuid, err))
 				return
 			}
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				global.Logger.Warn(fmt.Sprintf("Failed to send ping for %s: %v", c.uuid, err))
 				return // 发送 Ping 失败，通常意味着连接已关闭
 			}
 		}
@@ -230,7 +216,6 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 	// 检查用户是否已经有活跃连接
 	if existingClient, exists := hub.GetClientByUUID(uuid); exists {
-		global.Logger.Warn(fmt.Sprintf("User %s already has an active connection, closing old connection", uuid))
 		// 关闭旧连接
 		if existingClient.closeConnection() {
 			// 取消注册旧客户端
@@ -250,7 +235,6 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	// 初始设置读取截止时间
 	err = conn.SetReadDeadline(time.Now().Add(pongWait))
 	if err != nil {
-		global.Logger.Error(fmt.Sprintf("Failed to set initial read deadline for %s: %v", uuid, err))
 		if err := conn.Close(); err != nil {
 			return
 		}
@@ -277,8 +261,6 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	} else {
 		client.send <- welcomeMessage // 将欢迎消息放入发送通道
 	}
-
-	global.Logger.Info(fmt.Sprintf("New WebSocket connection established for user %s (%s)", client.username, client.uuid))
 
 	// 启动后台 goroutine 处理读写。
 	go client.writePump()

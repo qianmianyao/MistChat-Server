@@ -275,3 +275,18 @@ func (w *WebSockerRouter) GetSignalKey(c *gin.Context) {
 	}
 	utils.SuccessWithDefault(c, &data)
 }
+
+func (w *WebSockerRouter) GetUsersRooms(c *gin.Context) {
+	var params dot.GetUsersRoomsParams
+	if err := c.ShouldBindQuery(&params); err != nil {
+		utils.Error(c, "参数错误")
+		return
+	}
+	rooms, err := w.chatFind.UsersRooms(params.UserUUID)
+	if err != nil {
+		utils.ErrorWithDefault(c)
+		return
+	}
+
+	utils.SuccessWithDefault(c, rooms)
+}
